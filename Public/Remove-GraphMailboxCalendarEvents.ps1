@@ -25,7 +25,7 @@
         if ($EventID) {
             $URIEvent = "/users/$UserPrincipalName/calendars/$($CalendarID)/events/$($EventID)"
             #Write-Color "Deleting $URIEvent", ' ', $Calendar.Name -Color Yellow, White, Blue
-            Invoke-O365Graph -Uri $URIEvent -Method DELETE -Authorization $Authorization
+            Invoke-O365Graph -Uri $URIEvent -Method DELETE -Headers $Headers
         }
     }
 }
