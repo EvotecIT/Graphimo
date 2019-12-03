@@ -14,7 +14,7 @@
             $EndDay = $StartDay + 1800
             $Date1 = (Get-Date).AddDays($StartDay)
             $Date2 = (Get-Date).AddDays($EndDay)
-            $CalendarEvents = Get-GraphCalendarEvents -UserPrincipalName $UserPrincipalName -Headers $Authorization -DateStart $Date1 -DateEnd $Date2 -CalendarID $CalendarID
+            $CalendarEvents = Get-GraphCalendarEvents -UserPrincipalName $UserPrincipalName -Headers $Headers -DateStart $Date1 -DateEnd $Date2 -CalendarID $CalendarID
             foreach ($Event in $CalendarEvents) {
                 #Write-Color "Deleting $URIEvent", ' ', $Calendar.Name -Color Yellow, White, Blue
                 Remove-GraphMailboxCalendarEvent -Headers $Headers -UserPrincipalName $UserPrincipalName -CalendarID $CalendarID -EventID $Event.ID

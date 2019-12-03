@@ -6,5 +6,5 @@
         [string] $CalendarID
     )
     $URI = "/users/$UserPrincipalName/calendars/$($CalendarID)"
-    Invoke-O365Graph -Uri $URI -Method DELETE -Authorization $Headers
+    Invoke-O365Graph -Uri $URI -Method DELETE -Headers $Headers
 }

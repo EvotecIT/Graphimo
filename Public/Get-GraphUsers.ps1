@@ -3,5 +3,5 @@
     param(
         [alias('Authorization')][System.Collections.IDictionary] $Headers
     )
-    Invoke-O365Graph -Uri "/users/" -Method GET -Authorization $Headers
+    Invoke-O365Graph -Uri "/users/" -Method GET -Headers $Headers
 }
