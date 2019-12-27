@@ -6,6 +6,7 @@
         [string] $TenantDomain,
         [ValidateSet("https://manage.office.com", "https://graph.microsoft.com")] $Resource = "https://manage.office.com"
     )
+    # https://dzone.com/articles/getting-access-token-for-microsoft-graph-using-oau-1
     $Body = @{
         grant_type    = "client_credentials"
         resource      = $Resource

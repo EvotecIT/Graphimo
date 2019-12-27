@@ -20,12 +20,20 @@
         $RestSplat.Uri = -join ($PrimaryUri, $Uri)
     }
     try {
-        $OutputQuery = Invoke-RestMethod @RestSplat
-        $OutputQuery.value
-        if ($OutputQuery.'@odata.nextLink') {
-            $RestSplat.Uri = $OutputQuery.'@odata.nextLink'
-            $OutputQuery = Invoke-O365Graph @RestSplat -FullUri
-            $OutputQuery
+        $OutputQuery = Invoke-RestMethod @RestSplat -Verbose:$false
+        if ($Method -eq 'GET') {
+            if ($OutputQuery.value) {
+                $OutputQuery.value
+            }
+            if ($OutputQuery.'@odata.nextLink') {
+                $RestSplat.Uri = $OutputQuery.'@odata.nextLink'
+                $MoreData = Invoke-O365Graph @RestSplat -FullUri
+                if ($MoreData) {
+                    $MoreData
+                }
+            }
+        } else {
+            return $true
         }
     } catch {
         $RestError = $_.ErrorDetails.Message
@@ -39,6 +47,9 @@
             }
         } else {
             Write-Warning $_.Exception.Message
+        }
+        if ($Method -ne 'GET') {
+            return $false
         }
     }
 }
