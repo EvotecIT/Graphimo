@@ -4,8 +4,9 @@
         [uri] $PrimaryUri = 'https://graph.microsoft.com/v1.0',
         [uri] $Uri,
         [alias('Authorization')][System.Collections.IDictionary] $Headers,
-        [validateset('GET', 'DELETE')][string] $Method = 'GET',
-        [string] $ContentType = "application/json",
+        [validateset('GET', 'DELETE', 'POST')][string] $Method = 'GET',
+        [string] $ContentType = "application/json; charset=UTF-8",
+        [System.Collections.IDictionary] $Body,
         [switch] $FullUri
     )
 
@@ -13,6 +14,7 @@
         Headers     = $Headers
         Method      = $Method
         ContentType = $ContentType
+        Body        = $Body | ConvertTo-Json -Depth 5
     }
     if ($FullUri) {
         $RestSplat.Uri = $Uri
@@ -21,7 +23,7 @@
     }
     try {
         $OutputQuery = Invoke-RestMethod @RestSplat -Verbose:$false
-        if ($Method -eq 'GET') {
+        if ($Method -in 'GET') {
             if ($OutputQuery.value) {
                 $OutputQuery.value
             }
@@ -32,6 +34,8 @@
                     $MoreData
                 }
             }
+        } elseif ($Method -in 'POST') {
+            $OutputQuery
         } else {
             return $true
         }
@@ -48,7 +52,7 @@
         } else {
             Write-Warning $_.Exception.Message
         }
-        if ($Method -ne 'GET') {
+        if ($Method -ne 'GET', 'POST') {
             return $false
         }
     }

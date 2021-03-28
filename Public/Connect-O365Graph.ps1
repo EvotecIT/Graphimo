@@ -1,9 +1,9 @@
 ﻿function Connect-O365Graph {
     [cmdletBinding()]
     param(
-        [string][alias('ClientID')] $ApplicationID,
-        [string][alias('ClientSecret')] $ApplicationKey,
-        [string] $TenantDomain,
+        [parameter(Mandatory)][string][alias('ClientID')] $ApplicationID,
+        [parameter(Mandatory)][string][alias('ClientSecret')] $ApplicationKey,
+        [parameter(Mandatory)][string] $TenantDomain,
         [ValidateSet("https://manage.office.com", "https://graph.microsoft.com")] $Resource = "https://manage.office.com"
     )
     # https://dzone.com/articles/getting-access-token-for-microsoft-graph-using-oau-1

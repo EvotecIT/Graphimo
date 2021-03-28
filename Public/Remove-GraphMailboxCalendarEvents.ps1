@@ -19,11 +19,10 @@
             #Write-Color "Remove-GraphMailboxCalendarEvent - Processing user $UserPrincipalName for $CalendarID from $Date1 to $Date2" -Color DarkMagenta
             $CalendarEvents = Get-GraphCalendarEvents -UserPrincipalName $UserPrincipalName -Headers $Headers -DateStart $Date1 -DateEnd $Date2 -CalendarID $CalendarID
             #Write-Color "Count of Events ", $CalendarEvents.Count, ' for dates ', $Date1, ' and ', $Date2 -Color yellow, white, yellow, white, yellow, white, yellow
-            Write-Color "Remove-GraphMailboxCalendarEvent - Processing user $UserPrincipalName / found $($CalendarEvents.Count) events from $Date1 to $Date2" -Color Blue
-            #Write-Verbose "Remove-GraphMailboxCalendarEvent - Processing user $UserPrincipalName / found $($CalendarEvents.Count) events from $Date1 to $Date2"
+            #Write-Color "Remove-GraphMailboxCalendarEvent - Processing user $UserPrincipalName / found $($CalendarEvents.Count) events from $Date1 to $Date2" -Color Blue
+            Write-Verbose "Remove-GraphMailboxCalendarEvent - Processing user $UserPrincipalName / found $($CalendarEvents.Count) events from $Date1 to $Date2"
             foreach ($Event in $CalendarEvents) {
-               # Write-Color "Deleting $UserPrincipalName $URIEvent $CalendarID $EventID" -Color Yellow, White, Blue
-
+                # Write-Color "Deleting $UserPrincipalName $URIEvent $CalendarID $EventID" -Color Yellow, White, Blue
                 $Output = Remove-GraphMailboxCalendarEvent -Headers $Headers -UserPrincipalName $UserPrincipalName -CalendarID $CalendarID -EventID $Event.ID
             }
             $StartDay = $StartDay + $Batches
