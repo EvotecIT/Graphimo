@@ -8,7 +8,7 @@
     Description          = 'Module that helps managing some tasks on Office 365/Azure with Microsoft Graph'
     FunctionsToExport    = @('Connect-O365Graph', 'Get-GraphAzureGuest', 'Get-GraphCalendarEvents', 'Get-GraphUserCalendars', 'Get-GraphUsers', 'Import-GraphAzureGuest', 'Invoke-O365Graph', 'Remove-GraphMailboxCalendar', 'Remove-GraphMailboxCalendarEvent')
     GUID                 = '48605140-a2a9-44f3-b682-3efc5cc9f2c1'
-    ModuleVersion        = '0.0.1'
+    ModuleVersion        = '0.0.2'
     PowerShellVersion    = '5.1'
     PrivateData          = @{
         PSData = @{
