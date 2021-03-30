@@ -10,6 +10,10 @@
         [switch] $FullUri
     )
 
+    if ($Authorization.Error) {
+        Write-Warning "Invoke-O365Graph - Authorization error. Skipping."
+        return
+    }
     $RestSplat = @{
         Headers     = $Headers
         Method      = $Method
