@@ -9,11 +9,7 @@
     if ($AsHashTable) {
         $Guests = Invoke-O365Graph -Uri $URI -Method GET -Headers $Authorization -FullUri
         foreach ($Guest in $Guests) {
-            if ($AsHashTable) {
-                $GuestsDictionary[$Guest.mail] = $Guest
-            } else {
-                $Guest
-            }
+            $GuestsDictionary[$Guest.mail] = $Guest
         }
         $GuestsDictionary
     } else {

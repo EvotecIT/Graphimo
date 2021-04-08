@@ -11,7 +11,7 @@
 
         [parameter(ParameterSetName = 'ClearText')]
         [parameter(ParameterSetName = 'Credential')]
-        [ValidateSet("https://manage.office.com", "https://graph.microsoft.com")] $Resource = "https://manage.office.com"
+        [ValidateSet("https://manage.office.com", "https://graph.microsoft.com", "https://graph.microsoft.com/beta")] $Resource = "https://manage.office.com"
     )
     # https://dzone.com/articles/getting-access-token-for-microsoft-graph-using-oau-1
 

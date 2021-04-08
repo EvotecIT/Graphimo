@@ -26,6 +26,7 @@
         $RestSplat.Uri = -join ($PrimaryUri, $Uri)
     }
     try {
+        Write-Verbose "Invoke-O365Graph - Querying $($RestSplat.Uri)"
         $OutputQuery = Invoke-RestMethod @RestSplat -Verbose:$false
         if ($Method -in 'GET') {
             if ($OutputQuery.value) {
