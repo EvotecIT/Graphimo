@@ -19,10 +19,13 @@
     }
     if ($AsHashTable) {
         $Users = Invoke-O365Graph -Uri $URI -Method GET -Headers $Headers -PrimaryUri $PrimaryUri
-        foreach ($User in $Users) {
-            $UsersDictionary[$User.mail] = $User
+        if ($Users) {
+            # When invoke-graph fails - it will return $FALSE
+            foreach ($User in $Users) {
+                $UsersDictionary[$User.mail] = $User
+            }
+            $UsersDictionary
         }
-        $UsersDictionary
     } else {
         Invoke-O365Graph -Uri $URI -Method GET -Headers $Headers -PrimaryUri $PrimaryUri
     }
