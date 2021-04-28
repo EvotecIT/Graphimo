@@ -6,7 +6,8 @@
         [string[]] $Property,
         [validateSet('Guest')][string] $UserType,
         [uri] $PrimaryUri = 'https://graph.microsoft.com/v1.0',
-        [switch] $AsHashTable
+        [switch] $AsHashTable,
+        [string] $CacheProperty = 'mail'
     )
     $UsersDictionary = [ordered]@{}
     $URI = '/users'
@@ -19,10 +20,12 @@
     }
     if ($AsHashTable) {
         $Users = Invoke-O365Graph -Uri $URI -Method GET -Headers $Headers -PrimaryUri $PrimaryUri
-        if ($Users) {
+        if ($Users -ne $false) {
             # When invoke-graph fails - it will return $FALSE
             foreach ($User in $Users) {
-                $UsersDictionary[$User.mail] = $User
+                if ($User.$CacheProperty) {
+                    $UsersDictionary[$User.$CacheProperty] = $User
+                }
             }
             $UsersDictionary
         }

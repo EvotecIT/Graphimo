@@ -10,6 +10,12 @@
         [switch] $FullUri
     )
 
+    # This forces a reconnect of session in case it's about to time out. If it's not timeouting a cache value is used
+    if ($Headers.Splat) {
+        $Splat = $Headers.Splat
+        $Headers = Connect-O365Graph @Splat
+    }
+
     if ($Authorization.Error) {
         Write-Warning "Invoke-O365Graph - Authorization error. Skipping."
         return
@@ -18,7 +24,10 @@
         Headers     = $Headers
         Method      = $Method
         ContentType = $ContentType
-        Body        = $Body | ConvertTo-Json -Depth 5
+        #Body        = $Body | ConvertTo-Json -Depth 5
+    }
+    if ($Body) {
+        $RestSplat['Body'] = $Body | ConvertTo-Json -Depth 5
     }
     if ($FullUri) {
         $RestSplat.Uri = $Uri
@@ -57,7 +66,7 @@
         } else {
             Write-Warning $_.Exception.Message
         }
-        if ($Method -ne 'GET', 'POST') {
+        if ($Method -notin 'GET', 'POST') {
             return $false
         }
     }
