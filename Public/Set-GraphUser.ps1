@@ -21,7 +21,6 @@
         [string] $CompanyName,
         [string] $DisplayName,
         [switch] $ShowInAddressList
-
     )
     if ($UserID) {
         $URI = "/users/$UserID"
@@ -29,24 +28,26 @@
         $URI = "/users/$UserPrincipalName"
     }
     $Body = [ordered]@{
-        'jobTitle'          = $JobTitle
-        'employeeId'        = $EmployeeId
-        'givenName'         = $givenName
-        'surname'           = $Surname
-        'city'              = $City
-        'country'           = $Country
-        'department'        = $Department
-        'postalCode'        = $PostalCode
-        'state'             = $State
-        'streetAddress'     = $StreetAddress
-        'businessPhones'    = if ($businessPhones) { @($businessPhones) } else {}
-        "mobilePhone"       = $mobilePhone
-        "officeLocation"    = $OfficeLocation
-        'companyName'       = $CompanyName
-        'displayName'       = $DisplayName
+        'jobTitle'          = if ($JobTitle) { $JobTitle } else { $null }
+        'employeeId'        = if ($EmployeeId) { $EmployeeId } else { $null }
+        'givenName'         = if ($givenName) { $givenName } else { $null }
+        'surname'           = if ($Surname) { $Surname } else { $null }
+        'city'              = if ($City) { $City } else { $null }
+        'country'           = if ($Country) { $Country } else { $null }
+        'department'        = if ($Department) { $Department } else { $null }
+        'postalCode'        = if ($PostalCode) { $PostalCode } else { $null }
+        'state'             = if ($State) { $State } else { $null }
+        'streetAddress'     = if ($StreetAddress) { $StreetAddress } else { $null }
+        'businessPhones'    = if ($businessPhones) { @($businessPhones) } else { '' }
+        "mobilePhone"       = if ($mobilePhone) { $mobilePhone } else { $null }
+        "officeLocation"    = if ($OfficeLocation) { $OfficeLocation } else { $null }
+        'companyName'       = if ($CompanyName) { $CompanyName } else { $null }
+        'displayName'       = if ($DisplayName) { $DisplayName } else { $null }
         'showInAddressList' = $ShowInAddressList.IsPresent
     }
-    Remove-EmptyValue -Hashtable $Body
+    if (-not $SkipRemoveEmptyValues) {
+        Remove-EmptyValue -Hashtable $Body -DoNotRemoveNull #-DoNotRemoveEmptyArray:$DoNotRemoveEmptyArray -DoNotRemoveEmptyDictionary:$DoNotRemoveEmptyDictionary
+    }
     if ($Body.Count -gt 0) {
         Invoke-O365Graph -Uri $URI -Method PATCH -Headers $Authorization -Body $Body
     }
