@@ -3,12 +3,17 @@
     [cmdletBinding()]
     param(
         [alias('Authorization')][System.Collections.IDictionary] $Headers,
+        [string] $Id,
         [string[]] $Property,
-        [validateSet('Guest')][string] $UserType,
-        [uri] $PrimaryUri = 'https://graph.microsoft.com/v1.0',
-        [switch] $AsHashTable,
-        [string] $CacheProperty = 'mail'
+        [string] $Filter,
+        [string] $OrderBy
+
+        #[validateSet('Guest')][string] $UserType,
+        #[uri] $PrimaryUri = 'https://graph.microsoft.com/v1.0',
+        #[switch] $AsHashTable,
+        #[string] $CacheProperty = 'mail'
     )
+    <#
     $UsersDictionary = [ordered]@{}
     $URI = '/users'
     if ($Property -and $UserType) {
@@ -32,4 +37,25 @@
     } else {
         Invoke-O365Graph -Uri $URI -Method GET -Headers $Headers -PrimaryUri $PrimaryUri
     }
+    #>
+
+
+    if ($ID) {
+        # Query a single group
+        $RelativeURI = "/users/$ID"
+        $QueryParameter = @{
+            '$Select' = $Property -join ','
+        }
+    } else {
+        # Query multiple groups
+        $RelativeURI = '/users'
+        $QueryParameter = @{
+            '$Select'  = $Property -join ','
+            '$filter'  = $Filter
+            '$orderby' = $OrderBy
+        }
+    }
+    Remove-EmptyValue -Hashtable $QueryParameter
+    $URI = Join-UriQuery -BaseUri 'https://graph.microsoft.com/v1.0' -RelativeOrAbsoluteUri $RelativeURI -QueryParameter $QueryParameter
+    Invoke-Graph -Uri $URI -Method GET -Headers $Headers -PrimaryUri $PrimaryUri -FullUri
 }

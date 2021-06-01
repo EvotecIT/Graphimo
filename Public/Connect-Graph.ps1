@@ -1,4 +1,4 @@
-﻿function Connect-O365Graph {
+﻿function Connect-Graph {
     [cmdletBinding(DefaultParameterSetName = 'ClearText')]
     param(
         [parameter(Mandatory, ParameterSetName = 'ClearText')][string][alias('ClientID')] $ApplicationID,
@@ -11,7 +11,7 @@
 
         [parameter(ParameterSetName = 'ClearText')]
         [parameter(ParameterSetName = 'Credential')]
-        [ValidateSet("https://manage.office.com", "https://graph.microsoft.com", "https://graph.microsoft.com/beta", 'https://graph.microsoft.com/.default')] $Resource = "https://manage.office.com",
+        [ValidateSet("https://manage.office.com", "https://graph.microsoft.com", "https://graph.microsoft.com/beta", 'https://graph.microsoft.com/.default')] $Resource = 'https://graph.microsoft.com/.default',
         [int] $ExpiresTimeout = 30,
         [switch] $ForceRefesh
     )
@@ -59,9 +59,8 @@
         $RestSplat['Body']['resource'] = $Resource
         $RestSplat['Uri'] = "https://login.microsoftonline.com/$($TenantDomain)/oauth2/token"
     }
-    Write-Verbose "Connect-O365Graph - EndPoint $($RestSplat['Uri'])"
+    Write-Verbose "Connect-Graph - EndPoint $($RestSplat['Uri'])"
     try {
-        #$RestSplat.Body | Out-String | Write-Verbose
         $Authorization = Invoke-RestMethod @RestSplat
         $Key = [ordered] @{
             'Authorization' = "$($Authorization.token_type) $($Authorization.access_token)"
@@ -78,7 +77,7 @@
         $Script:AuthorizationCache[$ApplicationID] = $Key
     } catch {
         $ErrorMessage = $_.Exception.Message -replace "`n", " " -replace "`r", " "
-        Write-Warning -Message "Connect-O365Graph - Error: $ErrorMessage"
+        Write-Warning -Message "Connect-Graph - Error: $ErrorMessage"
         $Key = [ordered] @{
             'Authorization' = $Null
             'Extended'      = $Null

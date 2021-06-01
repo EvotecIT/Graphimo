@@ -1,4 +1,4 @@
-﻿function Invoke-O365Graph {
+﻿function Invoke-Graph {
     [cmdletBinding()]
     param(
         [uri] $PrimaryUri = 'https://graph.microsoft.com/v1.0',
@@ -13,18 +13,17 @@
     # This forces a reconnect of session in case it's about to time out. If it's not timeouting a cache value is used
     if ($Headers.Splat) {
         $Splat = $Headers.Splat
-        $Headers = Connect-O365Graph @Splat
+        $Headers = Connect-Graph @Splat
     }
 
     if ($Authorization.Error) {
-        Write-Warning "Invoke-O365Graph - Authorization error. Skipping."
+        Write-Warning "Invoke-Graph - Authorization error. Skipping."
         return
     }
     $RestSplat = @{
         Headers     = $Headers
         Method      = $Method
         ContentType = $ContentType
-        #Body        = $Body | ConvertTo-Json -Depth 5
     }
     if ($Body) {
         $RestSplat['Body'] = $Body | ConvertTo-Json -Depth 5
@@ -35,7 +34,7 @@
         $RestSplat.Uri = -join ($PrimaryUri, $Uri)
     }
     try {
-        Write-Verbose "Invoke-O365Graph - Querying $($RestSplat.Uri)"
+        Write-Verbose "Invoke-Graph - Querying [$Method] $($RestSplat.Uri)"
         $OutputQuery = Invoke-RestMethod @RestSplat -Verbose:$false
         if ($Method -in 'GET') {
             if ($OutputQuery.value) {
@@ -43,7 +42,7 @@
             }
             if ($OutputQuery.'@odata.nextLink') {
                 $RestSplat.Uri = $OutputQuery.'@odata.nextLink'
-                $MoreData = Invoke-O365Graph @RestSplat -FullUri
+                $MoreData = Invoke-Graph @RestSplat -FullUri
                 if ($MoreData) {
                     $MoreData
                 }

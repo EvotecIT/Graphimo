@@ -1,4 +1,4 @@
-﻿function Import-GraphAzureGuest {
+﻿function Import-GraphGuest {
     [cmdletBinding()]
     param(
         [Parameter(Mandatory)][System.Collections.IDictionary] $Authorization,
@@ -14,5 +14,5 @@
         'inviteRedirectUrl'       = $InviteRedirectUrl
         'sendInvitationMessage'   = $SendInvitationMessage.IsPresent
     }
-    Invoke-O365Graph -Uri $URI -Method POST -Headers $Authorization -Body $Body
+    Invoke-Graph -Uri $URI -Method POST -Headers $Authorization -Body $Body
 }

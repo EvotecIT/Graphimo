@@ -3,12 +3,12 @@
     param(
         [alias('Authorization')][System.Collections.IDictionary] $Headers,
         [string] $UserPrincipalName,
-        [string] $UserID
+        [alias('UserID')][string] $ID
     )
-    if ($UserID) {
-        $URI = "/users/$UserID"
+    if ($ID) {
+        $URI = "/users/$ID"
     } else {
         $URI = "/users/$UserPrincipalName"
     }
-    Invoke-O365Graph -Uri $URI -Method DELETE -Headers $Headers
+    Invoke-Graph -Uri $URI -Method DELETE -Headers $Headers
 }

@@ -1,8 +1,8 @@
-﻿function Set-GraphAzureUser {
+﻿function Set-GraphUser {
     [cmdletBinding()]
     param(
         [Parameter(Mandatory)][System.Collections.IDictionary] $Authorization,
-        [string] $UserID,
+        [alias('UserID')][string] $ID,
         [string] $UserPrincipalName,
         [string] $Name,
         [alias('FirstName')][string] $GivenName,
@@ -22,8 +22,8 @@
         [string] $DisplayName,
         [switch] $ShowInAddressList
     )
-    if ($UserID) {
-        $URI = "/users/$UserID"
+    if ($ID) {
+        $URI = "/users/$ID"
     } else {
         $URI = "/users/$UserPrincipalName"
     }
@@ -46,9 +46,9 @@
         'showInAddressList' = $ShowInAddressList.IsPresent
     }
     if (-not $SkipRemoveEmptyValues) {
-        Remove-EmptyValue -Hashtable $Body -DoNotRemoveNull #-DoNotRemoveEmptyArray:$DoNotRemoveEmptyArray -DoNotRemoveEmptyDictionary:$DoNotRemoveEmptyDictionary
+        Remove-EmptyValue -Hashtable $Body -DoNotRemoveNull
     }
     if ($Body.Count -gt 0) {
-        Invoke-O365Graph -Uri $URI -Method PATCH -Headers $Authorization -Body $Body
+        Invoke-Graph -Uri $URI -Method PATCH -Headers $Authorization -Body $Body
     }
 }
