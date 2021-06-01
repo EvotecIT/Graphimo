@@ -1,7 +1,7 @@
 ﻿function Remove-GraphUser {
     [cmdletBinding()]
     param(
-        [alias('Authorization')][System.Collections.IDictionary] $Headers,
+        [parameter(Mandatory)][alias('Authorization')][System.Collections.IDictionary] $Headers,
         [string] $UserPrincipalName,
         [alias('UserID')][string] $ID
     )

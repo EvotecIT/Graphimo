@@ -45,7 +45,7 @@
 
     if ($Script:AuthorizationCache[$ApplicationID] -and -not $ForceRefesh) {
         if ($Script:AuthorizationCache[$ApplicationID].ExpiresOn -gt [datetime]::UtcNow) {
-            Write-Verbose "Connect-O365Graph - Using cache for $ApplicationID"
+            Write-Verbose "Connect-Graph - Using cache for $ApplicationID"
             return $Script:AuthorizationCache[$ApplicationID]
         }
     }

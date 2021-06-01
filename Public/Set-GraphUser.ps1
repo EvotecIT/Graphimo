@@ -1,7 +1,7 @@
 ﻿function Set-GraphUser {
     [cmdletBinding()]
     param(
-        [Parameter(Mandatory)][System.Collections.IDictionary] $Authorization,
+        [parameter(Mandatory)][alias('Authorization')][System.Collections.IDictionary] $Headers,
         [alias('UserID')][string] $ID,
         [string] $UserPrincipalName,
         [string] $Name,
@@ -49,6 +49,6 @@
         Remove-EmptyValue -Hashtable $Body -DoNotRemoveNull
     }
     if ($Body.Count -gt 0) {
-        Invoke-Graph -Uri $URI -Method PATCH -Headers $Authorization -Body $Body
+        Invoke-Graph -Uri $URI -Method PATCH -Headers $Headers -Body $Body
     }
 }

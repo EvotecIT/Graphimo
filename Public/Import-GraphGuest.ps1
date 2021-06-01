@@ -1,7 +1,7 @@
 ﻿function Import-GraphGuest {
     [cmdletBinding()]
     param(
-        [Parameter(Mandatory)][System.Collections.IDictionary] $Authorization,
+        [parameter(Mandatory)][alias('Authorization')][System.Collections.IDictionary] $Headers,
         [string] $Name,
         [Parameter(Mandatory)][string] $EmailAddress,
         [switch] $SendInvitationMessage,
@@ -14,5 +14,5 @@
         'inviteRedirectUrl'       = $InviteRedirectUrl
         'sendInvitationMessage'   = $SendInvitationMessage.IsPresent
     }
-    Invoke-Graph -Uri $URI -Method POST -Headers $Authorization -Body $Body
+    Invoke-Graph -Uri $URI -Method POST -Headers $Headers -Body $Body
 }

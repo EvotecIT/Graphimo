@@ -2,16 +2,11 @@
     [alias('Get-GraphUsers')]
     [cmdletBinding()]
     param(
-        [alias('Authorization')][System.Collections.IDictionary] $Headers,
+        [parameter(Mandatory)][alias('Authorization')][System.Collections.IDictionary] $Headers,
         [string] $Id,
         [string[]] $Property,
         [string] $Filter,
         [string] $OrderBy
-
-        #[validateSet('Guest')][string] $UserType,
-        #[uri] $PrimaryUri = 'https://graph.microsoft.com/v1.0',
-        #[switch] $AsHashTable,
-        #[string] $CacheProperty = 'mail'
     )
     <#
     $UsersDictionary = [ordered]@{}
@@ -56,6 +51,5 @@
         }
     }
     Remove-EmptyValue -Hashtable $QueryParameter
-    $URI = Join-UriQuery -BaseUri 'https://graph.microsoft.com/v1.0' -RelativeOrAbsoluteUri $RelativeURI -QueryParameter $QueryParameter
-    Invoke-Graph -Uri $URI -Method GET -Headers $Headers -PrimaryUri $PrimaryUri -FullUri
+    Invoke-Graph -Uri $RelativeURI -Method GET -Headers $Headers -QueryParameter $QueryParameter
 }

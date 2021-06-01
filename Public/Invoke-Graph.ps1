@@ -1,15 +1,15 @@
 ﻿function Invoke-Graph {
-    [cmdletBinding()]
+    [cmdletBinding(SupportsShouldProcess)]
     param(
-        [uri] $PrimaryUri = 'https://graph.microsoft.com/v1.0',
+        [alias('PrimaryUri')][uri] $BaseUri = 'https://graph.microsoft.com/v1.0',
         [uri] $Uri,
-        [alias('Authorization')][System.Collections.IDictionary] $Headers,
+        [parameter(Mandatory)][alias('Authorization')][System.Collections.IDictionary] $Headers,
         [validateset('GET', 'DELETE', 'POST', 'PATCH')][string] $Method = 'GET',
         [string] $ContentType = "application/json; charset=UTF-8",
         [System.Collections.IDictionary] $Body,
+        [System.Collections.IDictionary] $QueryParameter,
         [switch] $FullUri
     )
-
     # This forces a reconnect of session in case it's about to time out. If it's not timeouting a cache value is used
     if ($Headers.Splat) {
         $Splat = $Headers.Splat
@@ -31,36 +31,38 @@
     if ($FullUri) {
         $RestSplat.Uri = $Uri
     } else {
-        $RestSplat.Uri = -join ($PrimaryUri, $Uri)
+        $RestSplat.Uri = Join-UriQuery -BaseUri $BaseUri -RelativeOrAbsoluteUri $Uri -QueryParameter $QueryParameter
     }
     try {
         Write-Verbose "Invoke-Graph - Querying [$Method] $($RestSplat.Uri)"
-        $OutputQuery = Invoke-RestMethod @RestSplat -Verbose:$false
-        if ($Method -in 'GET') {
-            if ($OutputQuery.value) {
-                $OutputQuery.value
-            }
-            if ($OutputQuery.'@odata.nextLink') {
-                $RestSplat.Uri = $OutputQuery.'@odata.nextLink'
-                $MoreData = Invoke-Graph @RestSplat -FullUri
-                if ($MoreData) {
-                    $MoreData
+        if ($PSCmdlet.ShouldProcess($($RestSplat.Uri), "Querying [$Method]")) {
+            $OutputQuery = Invoke-RestMethod @RestSplat -Verbose:$false
+            if ($Method -in 'GET') {
+                if ($OutputQuery.value) {
+                    $OutputQuery.value
                 }
+                if ($OutputQuery.'@odata.nextLink') {
+                    $RestSplat.Uri = $OutputQuery.'@odata.nextLink'
+                    $MoreData = Invoke-Graph @RestSplat -FullUri
+                    if ($MoreData) {
+                        $MoreData
+                    }
+                }
+            } elseif ($Method -in 'POST') {
+                $OutputQuery
+            } else {
+                return $true
             }
-        } elseif ($Method -in 'POST') {
-            $OutputQuery
-        } else {
-            return $true
         }
     } catch {
         $RestError = $_.ErrorDetails.Message
         if ($RestError) {
             try {
                 $ErrorMessage = ConvertFrom-Json -InputObject $RestError
-                $ErrorMy = -join ('JSON Error:' , $ErrorMessage.error.code, ' ', $ErrorMessage.error.message, ' Additional Error: ', $_.Exception.Message)
-                Write-Warning $ErrorMy
+                # Write-Warning -Message "Invoke-Graph - [$($ErrorMessage.error.code)] $($ErrorMessage.error.message), exception: $($_.Exception.Message)"
+                Write-Warning -Message "Invoke-Graph - Error: $($_.Exception.Message) $($ErrorMessage.error.message)"
             } catch {
-                Write-Warning $_.Exception.Message
+                Write-Warning -Message "Invoke-Graph - Error: $($_.Exception.Message)"
             }
         } else {
             Write-Warning $_.Exception.Message
