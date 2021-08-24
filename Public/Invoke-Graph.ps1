@@ -16,7 +16,7 @@
         $Headers = Connect-Graph @Splat
     }
 
-    if ($Authorization.Error) {
+    if ($Headers.Error) {
         Write-Warning "Invoke-Graph - Authorization error. Skipping."
         return
     }
