@@ -18,14 +18,14 @@
     )
     if ($All) {
         # Lets remove all, but to do that we need to know who to remove
-        $Users = Get-GraphGroupMember -Id $ID -Headers $Authorization -Verbose -Property id, displayName
+        $Users = Get-GraphGroupMember -Id $ID -Headers $Headers -Verbose -Property id, displayName
         foreach ($User in $Users) {
             $URI = "/groups/$ID/members/$($User.id)/`$ref"
             $Status = Invoke-Graph -Uri $URI -Method DELETE -Headers $Headers
             $Status
         }
     } elseif ($Search) {
-        $Users = Get-GraphGroupMember -Id $ID -Headers $Authorization -Verbose -Property id, displayName -Search $Search
+        $Users = Get-GraphGroupMember -Id $ID -Headers $Headers -Verbose -Property id, displayName -Search $Search
         foreach ($User in $Users) {
             $URI = "/groups/$ID/members/$($User.id)/`$ref"
             $Status = Invoke-Graph -Uri $URI -Method DELETE -Headers $Headers
