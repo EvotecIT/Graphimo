@@ -1,5 +1,5 @@
 ﻿function Remove-GraphUser {
-    [cmdletBinding()]
+    [cmdletBinding(SupportsShouldProcess)]
     param(
         [parameter(Mandatory)][alias('Authorization')][System.Collections.IDictionary] $Headers,
         [string] $UserPrincipalName,

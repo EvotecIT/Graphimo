@@ -1,5 +1,5 @@
 ﻿function Add-GraphUser {
-    [cmdletBinding()]
+    [cmdletBinding(SupportsShouldProcess)]
     param(
         [parameter(Mandatory)][alias('Authorization')][System.Collections.IDictionary] $Headers,
         [Parameter(Mandatory)][string] $UserPrincipalName,
