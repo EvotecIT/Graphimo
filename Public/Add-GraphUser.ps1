@@ -1,17 +1,16 @@
-﻿function Set-GraphUser {
+﻿function Add-GraphUser {
     [cmdletBinding()]
     param(
         [parameter(Mandatory)][alias('Authorization')][System.Collections.IDictionary] $Headers,
-        [alias('UserID')][string] $ID,
-        [string] $UserPrincipalName,
+        [Parameter(Mandatory)][string] $UserPrincipalName,
         [string] $Name,
-        [alias('AccountEnabled')][nullable[bool]] $Enabled,
+        [parameter(Mandatory)][alias('AccountEnabled')][bool] $Enabled,
         [alias('FirstName')][string] $GivenName,
         [alias('LastName')][string] $Surname,
         [string] $JobTitle,
         [string] $EmployeeId,
         [string] $City,
-        [string] $MailNickname,
+        [Parameter(Mandatory)][string] $MailNickname,
         [string] $Country,
         [string] $Department,
         [string] $PostalCode,
@@ -21,15 +20,15 @@
         [string] $MobilePhone,
         [string] $OfficeLocation,
         [string] $CompanyName,
-        [string] $DisplayName,
-        [switch] $ShowInAddressList
+        [Parameter(Mandatory)][string] $DisplayName,
+        [switch] $ShowInAddressList,
+        [switch] $DoNotForceChangePasswordNextSignIn,
+        [Parameter(Mandatory)][string] $Password
     )
-    if ($ID) {
-        $URI = "/users/$ID"
-    } else {
-        $URI = "/users/$UserPrincipalName"
-    }
+    $URI = "/users"
+
     $Body = [ordered]@{
+        'userPrincipalName' = $UserPrincipalName
         'jobTitle'          = if ($JobTitle) { $JobTitle } else { $null }
         'accountEnabled'    = $Enabled
         'employeeId'        = if ($EmployeeId) { $EmployeeId } else { $null }
@@ -48,11 +47,15 @@
         'companyName'       = if ($CompanyName) { $CompanyName } else { $null }
         'displayName'       = if ($DisplayName) { $DisplayName } else { $null }
         'showInAddressList' = $ShowInAddressList.IsPresent
+        'passwordProfile'   = @{
+            forceChangePasswordNextSignIn = -not $DoNotForceChangePasswordNextSignIn.IsPresent
+            password                      = $Password
+        }
     }
     if (-not $SkipRemoveEmptyValues) {
         Remove-EmptyValue -Hashtable $Body -DoNotRemoveNull
     }
     if ($Body.Count -gt 0) {
-        Invoke-Graph -Uri $URI -Method PATCH -Headers $Headers -Body $Body
+        Invoke-Graph -Uri $URI -Method POST -Headers $Headers -Body $Body
     }
 }
