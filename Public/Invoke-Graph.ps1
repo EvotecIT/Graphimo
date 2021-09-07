@@ -33,9 +33,14 @@
     } else {
         $RestSplat.Uri = Join-UriQuery -BaseUri $BaseUri -RelativeOrAbsoluteUri $Uri -QueryParameter $QueryParameter
     }
+    if ($RestSplat['Body']) {
+        $WhatIfInformation = "Invoking [$Method] " + [System.Environment]::NewLine + $RestSplat['Body'] + [System.Environment]::NewLine
+    } else {
+        $WhatIfInformation = "Invoking [$Method] "
+    }
     try {
-        Write-Verbose "Invoke-Graph - Querying [$Method] $($RestSplat.Uri)"
-        if ($PSCmdlet.ShouldProcess($($RestSplat.Uri), "Querying [$Method]")) {
+        Write-Verbose "Invoke-Graph - $($WhatIfInformation)over URI $($RestSplat.Uri)"
+        if ($PSCmdlet.ShouldProcess($($RestSplat.Uri), $WhatIfInformation)) {
             $OutputQuery = Invoke-RestMethod @RestSplat -Verbose:$false
             if ($Method -in 'GET') {
                 if ($OutputQuery.value) {

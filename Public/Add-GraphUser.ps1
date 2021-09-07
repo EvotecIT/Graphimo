@@ -26,7 +26,8 @@
         [Parameter(Mandatory)][string] $Password
     )
     $URI = "/users"
-
+    $Body = [ordered]@{}
+    <#
     $Body = [ordered]@{
         'userPrincipalName' = $UserPrincipalName
         'jobTitle'          = if ($JobTitle) { $JobTitle } else { $null }
@@ -52,9 +53,71 @@
             password                      = $Password
         }
     }
-    if (-not $SkipRemoveEmptyValues) {
-        Remove-EmptyValue -Hashtable $Body -DoNotRemoveNull
+    #>
+
+    if ($PSBoundParameters.ContainsKey('UserPrincipalName')) {
+        $Body['userPrincipalName'] = $UserPrincipalName
     }
+    if ($PSBoundParameters.ContainsKey('JobTitle')) {
+        $Body['jobTitle'] = $JobTitle
+    }
+    if ($PSBoundParameters.ContainsKey('EmployeeId')) {
+        $Body['employeeId'] = $EmployeeId
+    }
+    if ($PSBoundParameters.ContainsKey('MailNickname')) {
+        $Body['mailNickname'] = $MailNickname
+    }
+    if ($PSBoundParameters.ContainsKey('givenName')) {
+        $Body['givenName'] = $givenName
+    }
+    if ($PSBoundParameters.ContainsKey('Surname')) {
+        $Body['surname'] = $Surname
+    }
+    if ($PSBoundParameters.ContainsKey('City')) {
+        $Body['city'] = $City
+    }
+    if ($PSBoundParameters.ContainsKey('Country')) {
+        $Body['country'] = $Country
+    }
+    if ($PSBoundParameters.ContainsKey('Department')) {
+        $Body['department'] = $Department
+    }
+    if ($PSBoundParameters.ContainsKey('PostalCode')) {
+        $Body['postalCode'] = $PostalCode
+    }
+    if ($PSBoundParameters.ContainsKey('State')) {
+        $Body['state'] = $State
+    }
+    if ($PSBoundParameters.ContainsKey('StreetAddress')) {
+        $Body['streetAddress'] = $StreetAddress
+    }
+    if ($PSBoundParameters.ContainsKey('businessPhones')) {
+        $Body['businessPhones'] = @($businessPhones)
+    }
+    if ($PSBoundParameters.ContainsKey('mobilePhone')) {
+        $Body['mobilePhone'] = $mobilePhone
+    }
+    if ($PSBoundParameters.ContainsKey('OfficeLocation')) {
+        $Body['officeLocation'] = $OfficeLocation
+    }
+    if ($PSBoundParameters.ContainsKey('CompanyName')) {
+        $Body['companyName'] = $CompanyName
+    }
+    if ($PSBoundParameters.ContainsKey('DisplayName')) {
+        $Body['displayName'] = $DisplayName
+    }
+    if ($PSBoundParameters.ContainsKey('ShowInAddressList')) {
+        $Body['showInAddressList'] = $ShowInAddressList.IsPresent
+    }
+    if ($PSBoundParameters.ContainsKey('Enabled')) {
+        $Body['accountEnabled'] = $Enabled
+    }
+
+    $Body['passwordProfile'] = @{
+        forceChangePasswordNextSignIn = -not $DoNotForceChangePasswordNextSignIn.IsPresent
+        password                      = $Password
+    }
+    #Remove-EmptyValue -Hashtable $Body
     if ($Body.Count -gt 0) {
         Invoke-Graph -Uri $URI -Method POST -Headers $Headers -Body $Body
     }
