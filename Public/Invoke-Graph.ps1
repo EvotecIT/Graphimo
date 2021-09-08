@@ -39,24 +39,28 @@
         $WhatIfInformation = "Invoking [$Method] "
     }
     try {
-        Write-Verbose "Invoke-Graph - $($WhatIfInformation)over URI $($RestSplat.Uri)"
-        if ($PSCmdlet.ShouldProcess($($RestSplat.Uri), $WhatIfInformation)) {
+        if ($Method -eq 'GET') {
+            Write-Verbose "Invoke-Graph - $($WhatIfInformation)over URI $($RestSplat.Uri)"
             $OutputQuery = Invoke-RestMethod @RestSplat -Verbose:$false
-            if ($Method -in 'GET') {
-                if ($OutputQuery.value) {
-                    $OutputQuery.value
+            if ($OutputQuery.value) {
+                $OutputQuery.value
+            }
+            if ($OutputQuery.'@odata.nextLink') {
+                $RestSplat.Uri = $OutputQuery.'@odata.nextLink'
+                $MoreData = Invoke-Graph @RestSplat -FullUri
+                if ($MoreData) {
+                    $MoreData
                 }
-                if ($OutputQuery.'@odata.nextLink') {
-                    $RestSplat.Uri = $OutputQuery.'@odata.nextLink'
-                    $MoreData = Invoke-Graph @RestSplat -FullUri
-                    if ($MoreData) {
-                        $MoreData
-                    }
+            }
+        } else {
+            Write-Verbose "Invoke-Graph - $($WhatIfInformation)over URI $($RestSplat.Uri)"
+            if ($PSCmdlet.ShouldProcess($($RestSplat.Uri), $WhatIfInformation)) {
+                $OutputQuery = Invoke-RestMethod @RestSplat -Verbose:$false
+                if ($Method -in 'POST') {
+                    $OutputQuery
+                } else {
+                    return $true
                 }
-            } elseif ($Method -in 'POST') {
-                $OutputQuery
-            } else {
-                return $true
             }
         }
     } catch {
