@@ -74,7 +74,7 @@
                 Write-Warning -Message "Invoke-Graph - Error: $($_.Exception.Message)"
             }
         } else {
-            Write-Warning $_.Exception.Message
+            Write-Warning -Message "Invoke-Graph - Error: $($_.Exception.Message)"
         }
         if ($Method -notin 'GET', 'POST') {
             return $false
