@@ -1,14 +1,18 @@
 ﻿function Connect-Graph {
     [cmdletBinding(DefaultParameterSetName = 'ClearText')]
     param(
+        [parameter(Mandatory, ParameterSetName = 'Encrypted')]
         [parameter(Mandatory, ParameterSetName = 'ClearText')][string][alias('ClientID')] $ApplicationID,
         [parameter(Mandatory, ParameterSetName = 'ClearText')][string][alias('ClientSecret')] $ApplicationKey,
+        [parameter(Mandatory, ParameterSetName = 'Encrypted')][string][alias('ClientSecretEncrypted')] $ApplicationKeyEncrypted,
         [parameter(Mandatory, ParameterSetName = 'Credential')][PSCredential] $Credential,
 
+        [parameter(Mandatory, ParameterSetName = 'Encrypted')]
         [parameter(Mandatory, ParameterSetName = 'ClearText')]
         [parameter(Mandatory, ParameterSetName = 'Credential')]
         [string] $TenantDomain,
 
+        [parameter(Mandatory, ParameterSetName = 'Encrypted')]
         [parameter(ParameterSetName = 'ClearText')]
         [parameter(ParameterSetName = 'Credential')]
         [ValidateSet("https://manage.office.com", "https://graph.microsoft.com", "https://graph.microsoft.com/beta", 'https://graph.microsoft.com/.default')] $Resource = 'https://graph.microsoft.com/.default',
@@ -31,7 +35,17 @@
                 client_secret = $Credential.GetNetworkCredential().Password
             }
         }
-    } else {
+    } elseif ($ApplicationKey -or $ApplicationKeyEncrypted) {
+        if ($ApplicationKeyEncrypted) {
+            try {
+                $ApplicationKeyTemp = $ApplicationKeyEncrypted | ConvertTo-SecureString -ErrorAction Stop
+            } catch {
+                $ErrorMessage = $_.Exception.Message -replace "`n", " " -replace "`r", " "
+                Write-Warning -Message "Connect-Graph - Error: $ErrorMessage"
+                return
+            }
+            $ApplicationKey = [System.Net.NetworkCredential]::new([string]::Empty, $ApplicationKeyTemp).Password
+        }
         $RestSplat = @{
             ErrorAction = 'Stop'
             Method      = 'POST'
