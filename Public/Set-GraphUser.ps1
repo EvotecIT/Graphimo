@@ -8,21 +8,24 @@
         [alias('AccountEnabled')][nullable[bool]] $Enabled,
         [alias('FirstName')][string] $GivenName,
         [alias('LastName')][string] $Surname,
-        [string] $JobTitle,
+        [alias('Title')][string] $JobTitle,
         [string] $EmployeeId,
         [string] $City,
         [string] $MailNickname,
+        [alias('EmailAddress')][string] $Mail,
         [string] $Country,
         [string] $Department,
         [string] $PostalCode,
+        [alias('Fax')][string] $FaxNumber,
         [string] $State,
         [string] $StreetAddress,
-        [string] $BusinessPhones,
-        [string] $MobilePhone,
+        [alias('OfficePhone')][string] $BusinessPhones,
+        [alias('Mobile')][string] $MobilePhone,
         [string] $OfficeLocation,
         [string] $CompanyName,
         [string] $DisplayName,
-        [switch] $ShowInAddressList
+        [switch] $ShowInAddressList,
+        [alias('HireDate')][DateTime] $StartDate
     )
     if ($ID) {
         $URI = "/users/$ID"
@@ -30,28 +33,12 @@
         $URI = "/users/$UserPrincipalName"
     }
     $Body = [ordered]@{}
-    <#
-    $Body = [ordered]@{
-        'jobTitle'          = if ($JobTitle) { $JobTitle } else { $null }
-        'accountEnabled'    = $Enabled
-        'employeeId'        = if ($PSBoundParameters.ContainsKey('EmployeeId')) { $EmployeeId } else { $null }
-        'mailNickname'      = if ($PSBoundParameters.ContainsKey('MailNickname')) { $MailNickname } else { $null }
-        'givenName'         = if ($PSBoundParameters.ContainsKey('givenName')) { $givenName } else { $null }
-        'surname'           = if ($PSBoundParameters.ContainsKey('Surname')) { $Surnam } else { $null }
-        'city'              = if ($PSBoundParameters.ContainsKey('City')) { $City } else { $null }
-        'country'           = if ($PSBoundParameters.ContainsKey('Country')) { $Country } else { $null }
-        'department'        = if ($PSBoundParameters.ContainsKey('Department')) { $Department } else { $null }
-        'postalCode'        = if ($PSBoundParameters.ContainsKey('PostalCode')) { $PostalCode } else { $null }
-        'state'             = if ($PSBoundParameters.ContainsKey('State')) { $State } else { $null }
-        'streetAddress'     = if ($PSBoundParameters.ContainsKey('StreetAddress')) { $StreetAddress } else { $null }
-        'businessPhones'    = if ($PSBoundParameters.ContainsKey('businessPhones')) { @($businessPhones) } else { '' }
-        "mobilePhone"       = if ($PSBoundParameters.ContainsKey('mobilePhone')) { $mobilePhone } else { $null }
-        "officeLocation"    = if ($PSBoundParameters.ContainsKey('OfficeLocation')) { $OfficeLocation } else { $null }
-        'companyName'       = if ($PSBoundParameters.ContainsKey('CompanyName')) { $CompanyName } else { $null }
-        'displayName'       = if ($PSBoundParameters.ContainsKey('DisplayName')) { $DisplayName } else { $null }
-        'showInAddressList' = if ($PSBoundParameters.ContainsKey('ShowInAddressList')) { $ShowInAddressList.IsPresent } else { $null }
+    # https://docs.microsoft.com/en-us/graph/api/resources/user?view=graph-rest-1.0
+    if ($PSBoundParameters.ContainsKey('StartDate')) {
+        # requires fixing
+        # The date and time when the user was hired or will start work in case of a future hire.
+        $Body['employeeHireDate'] = $StartDate
     }
-    #>
     if ($PSBoundParameters.ContainsKey('JobTitle')) {
         $Body['jobTitle'] = $JobTitle
     }
@@ -60,6 +47,12 @@
     }
     if ($PSBoundParameters.ContainsKey('MailNickname')) {
         $Body['mailNickname'] = $MailNickname
+    }
+    if ($PSBoundParameters.ContainsKey('Mail')) {
+        $Body['mail'] = $Mail
+    }
+    if ($PSBoundParameters.ContainsKey('FaxNumber')) {
+        $Body['faxNumber'] = $FaxNumber
     }
     if ($PSBoundParameters.ContainsKey('givenName')) {
         $Body['givenName'] = $givenName

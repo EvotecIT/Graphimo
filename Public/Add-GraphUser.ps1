@@ -7,54 +7,35 @@
         [parameter(Mandatory)][alias('AccountEnabled')][bool] $Enabled,
         [alias('FirstName')][string] $GivenName,
         [alias('LastName')][string] $Surname,
-        [string] $JobTitle,
+        [alias('Title')][string] $JobTitle,
         [string] $EmployeeId,
         [string] $City,
         [Parameter(Mandatory)][string] $MailNickname,
+        [alias('EmailAddress')][string] $Mail,
         [string] $Country,
         [string] $Department,
         [string] $PostalCode,
+        [alias('Fax')][string] $FaxNumber,
         [string] $State,
         [string] $StreetAddress,
-        [string] $BusinessPhones,
-        [string] $MobilePhone,
+        [alias('OfficePhone')][string] $BusinessPhones,
+        [alias('Mobile')][string] $MobilePhone,
         [string] $OfficeLocation,
         [string] $CompanyName,
         [Parameter(Mandatory)][string] $DisplayName,
         [switch] $ShowInAddressList,
         [switch] $DoNotForceChangePasswordNextSignIn,
-        [Parameter(Mandatory)][string] $Password
+        [Parameter(Mandatory)][string] $Password,
+        [alias('HireDate')][DateTime] $StartDate
     )
     $URI = "/users"
     $Body = [ordered]@{}
-    <#
-    $Body = [ordered]@{
-        'userPrincipalName' = $UserPrincipalName
-        'jobTitle'          = if ($JobTitle) { $JobTitle } else { $null }
-        'accountEnabled'    = $Enabled
-        'employeeId'        = if ($EmployeeId) { $EmployeeId } else { $null }
-        'mailNickname'      = if ($MailNickname) { $MailNickname } else { $null }
-        'givenName'         = if ($givenName) { $givenName } else { $null }
-        'surname'           = if ($Surname) { $Surname } else { $null }
-        'city'              = if ($City) { $City } else { $null }
-        'country'           = if ($Country) { $Country } else { $null }
-        'department'        = if ($Department) { $Department } else { $null }
-        'postalCode'        = if ($PostalCode) { $PostalCode } else { $null }
-        'state'             = if ($State) { $State } else { $null }
-        'streetAddress'     = if ($StreetAddress) { $StreetAddress } else { $null }
-        'businessPhones'    = if ($businessPhones) { @($businessPhones) } else { '' }
-        "mobilePhone"       = if ($mobilePhone) { $mobilePhone } else { $null }
-        "officeLocation"    = if ($OfficeLocation) { $OfficeLocation } else { $null }
-        'companyName'       = if ($CompanyName) { $CompanyName } else { $null }
-        'displayName'       = if ($DisplayName) { $DisplayName } else { $null }
-        'showInAddressList' = $ShowInAddressList.IsPresent
-        'passwordProfile'   = @{
-            forceChangePasswordNextSignIn = -not $DoNotForceChangePasswordNextSignIn.IsPresent
-            password                      = $Password
-        }
+    # https://docs.microsoft.com/en-us/graph/api/resources/user?view=graph-rest-1.0
+    if ($PSBoundParameters.ContainsKey('StartDate')) {
+        # requires fixing
+        # The date and time when the user was hired or will start work in case of a future hire.
+        $Body['employeeHireDate'] = $StartDate
     }
-    #>
-
     if ($PSBoundParameters.ContainsKey('UserPrincipalName')) {
         $Body['userPrincipalName'] = $UserPrincipalName
     }
@@ -66,6 +47,12 @@
     }
     if ($PSBoundParameters.ContainsKey('MailNickname')) {
         $Body['mailNickname'] = $MailNickname
+    }
+    if ($PSBoundParameters.ContainsKey('Mail')) {
+        $Body['mail'] = $Mail
+    }
+    if ($PSBoundParameters.ContainsKey('FaxNumber')) {
+        $Body['faxNumber'] = $FaxNumber
     }
     if ($PSBoundParameters.ContainsKey('givenName')) {
         $Body['givenName'] = $givenName

@@ -4,7 +4,7 @@
         [alias('PrimaryUri')][uri] $BaseUri = 'https://graph.microsoft.com/v1.0',
         [uri] $Uri,
         [parameter(Mandatory)][alias('Authorization')][System.Collections.IDictionary] $Headers,
-        [validateset('GET', 'DELETE', 'POST', 'PATCH')][string] $Method = 'GET',
+        [validateset('GET', 'DELETE', 'POST', 'PATCH', 'PUT')][string] $Method = 'GET',
         [string] $ContentType = "application/json; charset=UTF-8",
         [System.Collections.IDictionary] $Body,
         [System.Collections.IDictionary] $QueryParameter,

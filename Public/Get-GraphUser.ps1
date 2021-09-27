@@ -1,44 +1,43 @@
 ﻿function Get-GraphUser {
     [alias('Get-GraphUsers')]
-    [cmdletBinding()]
+    [cmdletBinding(DefaultParameterSetName = 'Default')]
     param(
+        [parameter(ParameterSetName = 'Default', Mandatory)]
+        [parameter(ParameterSetName = 'EmailAddress', Mandatory)]
+        [parameter(ParameterSetName = 'UserPrincipalName', Mandatory)]
+        [parameter(ParameterSetName = 'Filter', Mandatory)]
+        [parameter(ParameterSetName = 'Id', Mandatory)]
         [parameter(Mandatory)][alias('Authorization')][System.Collections.IDictionary] $Headers,
-        [string] $Id,
+
+        [parameter(ParameterSetName = 'Id')][string] $Id,
+        [parameter(ParameterSetName = 'UserPrincipalName')][string] $UserPrincipalName,
+        [alias('Mail')][parameter(ParameterSetName = 'EmailAddress')][string] $EmailAddress,
+
         [string[]] $Property,
-        [string] $Filter,
-        [string] $OrderBy
+
+        [parameter(ParameterSetName = 'Filter')][string] $Filter,
+        [string] $OrderBy,
+        [switch] $IncludeManager
     )
-    <#
-    $UsersDictionary = [ordered]@{}
-    $URI = '/users'
-    if ($Property -and $UserType) {
-        $URI = "$($URI)?" + "`$select=" + $($Property -join ",") + "&`$filter=userType eq 'Guest'"
-    } elseif ($Property) {
-        $URI = "$($URI)?" + "`$select=" + $($Property -join ",")
-    } elseif ($UserType) {
-        $URI = "$($URI)?" + "`$filter=userType eq 'Guest'"
-    }
-    if ($AsHashTable) {
-        $Users = Invoke-O365Graph -Uri $URI -Method GET -Headers $Headers -PrimaryUri $PrimaryUri
-        if ($Users -ne $false) {
-            # When invoke-graph fails - it will return $FALSE
-            foreach ($User in $Users) {
-                if ($User.$CacheProperty) {
-                    $UsersDictionary[$User.$CacheProperty] = $User
-                }
-            }
-            $UsersDictionary
-        }
-    } else {
-        Invoke-O365Graph -Uri $URI -Method GET -Headers $Headers -PrimaryUri $PrimaryUri
-    }
-    #>
-
-
-    if ($ID) {
-        # Query a single group
-        $RelativeURI = "/users/$ID"
+    if ($UserPrincipalName) {
+        $RelativeURI = '/users'
         $QueryParameter = @{
+            '$Select' = $Property -join ','
+            '$filter' = "userPrincipalName eq '$UserPrincipalName'"
+        }
+    } elseif ($EmailAddress) {
+        $RelativeURI = '/users'
+        $QueryParameter = @{
+            '$Select' = $Property -join ','
+            '$filter' = "mail eq '$EmailAddress'"
+        }
+    } elseif ($ID) {
+        # Query a single user
+        # doing it standard way doesn't seem to work so lets user filter instead
+        #$RelativeURI = "/users/$ID"
+        $RelativeURI = "/users"
+        $QueryParameter = @{
+            '$filter' = "id eq '$ID'"
             '$Select' = $Property -join ','
         }
     } else {
@@ -50,6 +49,10 @@
             '$orderby' = $OrderBy
         }
     }
+    if ($IncludeManager) {
+        $QueryParameter['$expand'] = 'manager'
+    }
+
     Remove-EmptyValue -Hashtable $QueryParameter
     Invoke-Graph -Uri $RelativeURI -Method GET -Headers $Headers -QueryParameter $QueryParameter
 }
