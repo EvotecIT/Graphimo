@@ -25,7 +25,8 @@
         [string] $CompanyName,
         [string] $DisplayName,
         [switch] $ShowInAddressList,
-        [alias('HireDate')][DateTime] $StartDate
+        [alias('HireDate')][DateTime] $StartDate,
+        [alias('CustomProperty')][System.Collections.IDictionary] $CustomProperties
     )
     if ($ID) {
         $URI = "/users/$ID"
@@ -100,14 +101,10 @@
         $Body['accountEnabled'] = $Enabled
     }
 
-    <#
-    if (-not $SkipRemoveEmptyValues) {
-        Remove-EmptyValue -Hashtable $Body -DoNotRemoveNull
-    } else {
-        Remove-EmptyValue -Hashtable $Body
+    foreach ($Property in $CustomProperties.Keys) {
+        $Body[$Property] = $CustomProperties[$Property]
     }
 
-    #>
     if ($Body.Count -gt 0) {
         Invoke-Graph -Uri $URI -Method PATCH -Headers $Headers -Body $Body
     } else {

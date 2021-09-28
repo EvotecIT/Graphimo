@@ -26,7 +26,8 @@
         [switch] $ShowInAddressList,
         [switch] $DoNotForceChangePasswordNextSignIn,
         [Parameter(Mandatory)][string] $Password,
-        [alias('HireDate')][DateTime] $StartDate
+        [alias('HireDate')][DateTime] $StartDate,
+        [alias('CustomProperty')][System.Collections.IDictionary] $CustomProperties
     )
     $URI = "/users"
     $Body = [ordered]@{}
@@ -104,6 +105,11 @@
         forceChangePasswordNextSignIn = -not $DoNotForceChangePasswordNextSignIn.IsPresent
         password                      = $Password
     }
+
+    foreach ($Property in $CustomProperties.Keys) {
+        $Body[$Property] = $CustomProperties[$Property]
+    }
+
     #Remove-EmptyValue -Hashtable $Body
     if ($Body.Count -gt 0) {
         Invoke-Graph -Uri $URI -Method POST -Headers $Headers -Body $Body
