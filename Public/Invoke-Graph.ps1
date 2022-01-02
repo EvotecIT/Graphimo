@@ -10,20 +10,34 @@
         [System.Collections.IDictionary] $QueryParameter,
         [switch] $FullUri
     )
-    # This forces a reconnect of session in case it's about to time out. If it's not timeouting a cache value is used
-    if ($Headers.Splat) {
-        $Splat = $Headers.Splat
-        $Headers = Connect-Graph @Splat
+    if ($Headers.MsalToken) {
+
+    } else {
+        # This forces a reconnect of session in case it's about to time out. If it's not timeouting a cache value is used
+        if ($Headers.Splat) {
+            $Splat = $Headers.Splat
+            $Headers = Connect-Graph @Splat
+        }
     }
 
     if ($Headers.Error) {
         Write-Warning "Invoke-Graph - Authorization error. Skipping."
         return
     }
-    $RestSplat = @{
-        Headers     = $Headers
-        Method      = $Method
-        ContentType = $ContentType
+    if ($Headers.MsalToken) {
+        $RestSplat = @{
+            Headers     = @{
+                Authorization = $Headers.MsalToken.TokenType + ' ' + $Headers.MsalToken.AccessToken
+            }
+            Method      = $Method
+            ContentType = $ContentType
+        }
+    } else {
+        $RestSplat = @{
+            Headers     = $Headers
+            Method      = $Method
+            ContentType = $ContentType
+        }
     }
     if ($Body) {
         $RestSplat['Body'] = $Body | ConvertTo-Json -Depth 5
