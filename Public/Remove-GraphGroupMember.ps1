@@ -21,19 +21,19 @@
         $Users = Get-GraphGroupMember -Id $ID -Headers $Headers -Verbose -Property id, displayName
         foreach ($User in $Users) {
             $URI = "/groups/$ID/members/$($User.id)/`$ref"
-            $Status = Invoke-Graph -Uri $URI -Method DELETE -Headers $Headers
+            $Status = Invoke-Graphimo -Uri $URI -Method DELETE -Headers $Headers
             $Status
         }
     } elseif ($Search) {
         $Users = Get-GraphGroupMember -Id $ID -Headers $Headers -Verbose -Property id, displayName -Search $Search
         foreach ($User in $Users) {
             $URI = "/groups/$ID/members/$($User.id)/`$ref"
-            $Status = Invoke-Graph -Uri $URI -Method DELETE -Headers $Headers
+            $Status = Invoke-Graphimo -Uri $URI -Method DELETE -Headers $Headers
             $Status
         }
     } else {
         # Lets delete just one record
         $URI = "/groups/$ID/members/$MemberID/`$ref"
-        Invoke-Graph -Uri $URI -Method DELETE -Headers $Headers
+        Invoke-Graphimo -Uri $URI -Method DELETE -Headers $Headers
     }
 }

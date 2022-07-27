@@ -54,5 +54,5 @@
     }
 
     Remove-EmptyValue -Hashtable $QueryParameter
-    Invoke-Graph -Uri $RelativeURI -Method GET -Headers $Headers -QueryParameter $QueryParameter
+    Invoke-Graphimo -Uri $RelativeURI -Method GET -Headers $Headers -QueryParameter $QueryParameter
 }

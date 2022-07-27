@@ -12,5 +12,5 @@
         "@odata.id" = "https://graph.microsoft.com/v1.0/directoryObjects/$MemberID"
     }
 
-    Invoke-Graph -Uri $URI -Method POST -Headers $Headers -Body $Body
+    Invoke-Graphimo -Uri $URI -Method POST -Headers $Headers -Body $Body
 }

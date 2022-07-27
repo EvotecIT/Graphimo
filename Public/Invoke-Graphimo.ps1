@@ -1,4 +1,4 @@
-﻿function Invoke-Graph {
+﻿function Invoke-Graphimo {
     [cmdletBinding(SupportsShouldProcess)]
     param(
         [alias('PrimaryUri')][uri] $BaseUri = 'https://graph.microsoft.com/v1.0',
@@ -16,12 +16,12 @@
         # This forces a reconnect of session in case it's about to time out. If it's not timeouting a cache value is used
         if ($Headers.Splat) {
             $Splat = $Headers.Splat
-            $Headers = Connect-Graph @Splat
+            $Headers = Connect-Graphimo @Splat
         }
     }
 
     if ($Headers.Error) {
-        Write-Warning "Invoke-Graph - Authorization error. Skipping."
+        Write-Warning "Invoke-Graphimo - Authorization error. Skipping."
         return
     }
     if ($Headers.MsalToken) {
@@ -54,20 +54,20 @@
     }
     try {
         if ($Method -eq 'GET') {
-            Write-Verbose "Invoke-Graph - $($WhatIfInformation)over URI $($RestSplat.Uri)"
+            Write-Verbose "Invoke-Graphimo - $($WhatIfInformation)over URI $($RestSplat.Uri)"
             $OutputQuery = Invoke-RestMethod @RestSplat -Verbose:$false
             if ($OutputQuery.value) {
                 $OutputQuery.value
             }
             if ($OutputQuery.'@odata.nextLink') {
                 $RestSplat.Uri = $OutputQuery.'@odata.nextLink'
-                $MoreData = Invoke-Graph @RestSplat -FullUri
+                $MoreData = Invoke-Graphimo @RestSplat -FullUri
                 if ($MoreData) {
                     $MoreData
                 }
             }
         } else {
-            Write-Verbose "Invoke-Graph - $($WhatIfInformation)over URI $($RestSplat.Uri)"
+            Write-Verbose "Invoke-Graphimo - $($WhatIfInformation)over URI $($RestSplat.Uri)"
             if ($PSCmdlet.ShouldProcess($($RestSplat.Uri), $WhatIfInformation)) {
                 $OutputQuery = Invoke-RestMethod @RestSplat -Verbose:$false
                 if ($Method -in 'POST') {
@@ -82,13 +82,13 @@
         if ($RestError) {
             try {
                 $ErrorMessage = ConvertFrom-Json -InputObject $RestError
-                # Write-Warning -Message "Invoke-Graph - [$($ErrorMessage.error.code)] $($ErrorMessage.error.message), exception: $($_.Exception.Message)"
-                Write-Warning -Message "Invoke-Graph - Error: $($_.Exception.Message) $($ErrorMessage.error.message)"
+                # Write-Warning -Message "Invoke-Graphimo - [$($ErrorMessage.error.code)] $($ErrorMessage.error.message), exception: $($_.Exception.Message)"
+                Write-Warning -Message "Invoke-Graphimo - Error: $($_.Exception.Message) $($ErrorMessage.error.message)"
             } catch {
-                Write-Warning -Message "Invoke-Graph - Error: $($_.Exception.Message)"
+                Write-Warning -Message "Invoke-Graphimo - Error: $($_.Exception.Message)"
             }
         } else {
-            Write-Warning -Message "Invoke-Graph - Error: $($_.Exception.Message)"
+            Write-Warning -Message "Invoke-Graphimo - Error: $($_.Exception.Message)"
         }
         if ($Method -notin 'GET', 'POST') {
             return $false

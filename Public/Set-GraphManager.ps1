@@ -19,5 +19,5 @@
     $Body = [ordered]@{
         "@odata.id" = "https://graph.microsoft.com/v1.0/users/$ManagerID"
     }
-    Invoke-Graph -Uri $URI -Method PUT -Headers $Headers -Body $Body
+    Invoke-Graphimo -Uri $URI -Method PUT -Headers $Headers -Body $Body
 }

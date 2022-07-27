@@ -112,6 +112,6 @@
 
     #Remove-EmptyValue -Hashtable $Body
     if ($Body.Count -gt 0) {
-        Invoke-Graph -Uri $URI -Method POST -Headers $Headers -Body $Body
+        Invoke-Graphimo -Uri $URI -Method POST -Headers $Headers -Body $Body
     }
 }

@@ -1,4 +1,4 @@
-﻿function Connect-Graph {
+﻿function Connect-Graphimo {
     [cmdletBinding(DefaultParameterSetName = 'ClearText')]
     param(
         [parameter(Mandatory, ParameterSetName = 'Encrypted')]
@@ -41,7 +41,7 @@
                 $ApplicationKeyTemp = $ApplicationKeyEncrypted | ConvertTo-SecureString -ErrorAction Stop
             } catch {
                 $ErrorMessage = $_.Exception.Message -replace "`n", " " -replace "`r", " "
-                Write-Warning -Message "Connect-Graph - Error: $ErrorMessage"
+                Write-Warning -Message "Connect-Graphimo - Error: $ErrorMessage"
                 return
             }
             $ApplicationKey = [System.Net.NetworkCredential]::new([string]::Empty, $ApplicationKeyTemp).Password
@@ -59,7 +59,7 @@
 
     if ($Script:AuthorizationCache[$ApplicationID] -and -not $ForceRefesh) {
         if ($Script:AuthorizationCache[$ApplicationID].ExpiresOn -gt [datetime]::UtcNow) {
-            Write-Verbose "Connect-Graph - Using cache for $ApplicationID"
+            Write-Verbose "Connect-Graphimo - Using cache for $ApplicationID"
             return $Script:AuthorizationCache[$ApplicationID]
         }
     }
@@ -73,7 +73,7 @@
         $RestSplat['Body']['resource'] = $Resource
         $RestSplat['Uri'] = "https://login.microsoftonline.com/$($TenantDomain)/oauth2/token"
     }
-    Write-Verbose "Connect-Graph - EndPoint $($RestSplat['Uri'])"
+    Write-Verbose "Connect-Graphimo - EndPoint $($RestSplat['Uri'])"
     try {
         $Authorization = Invoke-RestMethod @RestSplat
         $Key = [ordered] @{
@@ -91,7 +91,7 @@
         $Script:AuthorizationCache[$ApplicationID] = $Key
     } catch {
         $ErrorMessage = $_.Exception.Message -replace "`n", " " -replace "`r", " "
-        Write-Warning -Message "Connect-Graph - Error: $ErrorMessage"
+        Write-Warning -Message "Connect-Graphimo - Error: $ErrorMessage"
         $Key = [ordered] @{
             'Authorization' = $Null
             'Extended'      = $Null

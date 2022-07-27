@@ -10,5 +10,5 @@
     } else {
         $URI = "/users/$UserPrincipalName/manager/`$ref"
     }
-    Invoke-Graph -Uri $URI -Method DELETE -Headers $Headers
+    Invoke-Graphimo -Uri $URI -Method DELETE -Headers $Headers
 }

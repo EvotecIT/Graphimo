@@ -14,5 +14,5 @@
         'inviteRedirectUrl'       = $InviteRedirectUrl
         'sendInvitationMessage'   = $SendInvitationMessage.IsPresent
     }
-    Invoke-Graph -Uri $URI -Method POST -Headers $Headers -Body $Body
+    Invoke-Graphimo -Uri $URI -Method POST -Headers $Headers -Body $Body
 }

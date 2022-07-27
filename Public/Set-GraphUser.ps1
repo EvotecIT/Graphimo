@@ -106,7 +106,7 @@
     }
 
     if ($Body.Count -gt 0) {
-        Invoke-Graph -Uri $URI -Method PATCH -Headers $Headers -Body $Body
+        Invoke-Graphimo -Uri $URI -Method PATCH -Headers $Headers -Body $Body
     } else {
         Write-Warning -Message "Set-GraphUser - No changes were made to the user, as no field to change."
     }
