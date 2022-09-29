@@ -24,15 +24,11 @@
         [string] $OfficeLocation,
         [string] $CompanyName,
         [string] $DisplayName,
+        [string] $EmployeeType,
         [switch] $ShowInAddressList,
         [alias('HireDate')][DateTime] $StartDate,
         [alias('CustomProperty')][System.Collections.IDictionary] $CustomProperties
     )
-    if ($ID) {
-        $URI = "/users/$ID"
-    } else {
-        $URI = "/users/$UserPrincipalName"
-    }
     $Body = [ordered]@{}
     # https://docs.microsoft.com/en-us/graph/api/resources/user?view=graph-rest-1.0
     if ($PSBoundParameters.ContainsKey('StartDate')) {
@@ -100,13 +96,22 @@
     if ($PSBoundParameters.ContainsKey('Enabled')) {
         $Body['accountEnabled'] = $Enabled
     }
-
+    if ($PSBoundParameters.ContainsKey('EmployeeType')) {
+        $Body['employeeType'] = $EmployeeType
+        $BaseUri = 'https://graph.microsoft.com/beta'
+    } else {
+        $BaseUri = 'https://graph.microsoft.com/v1.0'
+    }
     foreach ($Property in $CustomProperties.Keys) {
         $Body[$Property] = $CustomProperties[$Property]
     }
-
+    if ($ID) {
+        $URI = "/users/$ID"
+    } else {
+        $URI = "/users/$UserPrincipalName"
+    }
     if ($Body.Count -gt 0) {
-        Invoke-Graphimo -Uri $URI -Method PATCH -Headers $Headers -Body $Body
+        Invoke-Graphimo -Uri $URI -Method PATCH -Headers $Headers -Body $Body -BaseUri $BaseUri
     } else {
         Write-Warning -Message "Set-GraphUser - No changes were made to the user, as no field to change."
     }

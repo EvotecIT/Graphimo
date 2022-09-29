@@ -25,6 +25,7 @@
         [Parameter(Mandatory)][string] $DisplayName,
         [switch] $ShowInAddressList,
         [switch] $DoNotForceChangePasswordNextSignIn,
+        [string] $EmployeeType,
         [Parameter(Mandatory)][string] $Password,
         [alias('HireDate')][DateTime] $StartDate,
         [alias('CustomProperty')][System.Collections.IDictionary] $CustomProperties
@@ -100,7 +101,12 @@
     if ($PSBoundParameters.ContainsKey('Enabled')) {
         $Body['accountEnabled'] = $Enabled
     }
-
+    if ($PSBoundParameters.ContainsKey('EmployeeType')) {
+        $Body['employeeType'] = $EmployeeType
+        $BaseUri = 'https://graph.microsoft.com/beta'
+    } else {
+        $BaseUri = 'https://graph.microsoft.com/v1.0'
+    }
     $Body['passwordProfile'] = @{
         forceChangePasswordNextSignIn = -not $DoNotForceChangePasswordNextSignIn.IsPresent
         password                      = $Password
@@ -112,6 +118,6 @@
 
     #Remove-EmptyValue -Hashtable $Body
     if ($Body.Count -gt 0) {
-        Invoke-Graphimo -Uri $URI -Method POST -Headers $Headers -Body $Body
+        Invoke-Graphimo -Uri $URI -Method POST -Headers $Headers -Body $Body -BaseUri $BaseUri
     }
 }
