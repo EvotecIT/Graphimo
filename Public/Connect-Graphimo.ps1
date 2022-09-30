@@ -12,12 +12,14 @@
         [parameter(Mandatory, ParameterSetName = 'Credential')]
         [string] $TenantDomain,
 
-        [parameter(Mandatory, ParameterSetName = 'Encrypted')]
+        [parameter(ParameterSetName = 'Encrypted')]
         [parameter(ParameterSetName = 'ClearText')]
         [parameter(ParameterSetName = 'Credential')]
         [ValidateSet("https://manage.office.com", "https://graph.microsoft.com", "https://graph.microsoft.com/beta", 'https://graph.microsoft.com/.default')] $Resource = 'https://graph.microsoft.com/.default',
         [int] $ExpiresTimeout = 30,
-        [switch] $ForceRefesh
+        [switch] $ForceRefesh,
+
+        [parameter(Mandatory, ParameterSetName = 'MsalToken')][System.Collections.IDictionary] $MsalToken
     )
     # Comparison V1/V2 https://nicolgit.github.io/AzureAD-Endopoint-V1-vs-V2-comparison/
 
@@ -55,6 +57,11 @@
                 client_secret = $ApplicationKey
             }
         }
+    } elseif ($MsalToken) {
+        $Authorization = @{
+            Splat = $MsalToken
+        }
+        return Connect-MsalToken -Authorization $Authorization -ExpiresTimeout $ExpiresTimeout -ForceRefesh:$ForceRefesh
     }
 
     if ($Script:AuthorizationCache[$ApplicationID] -and -not $ForceRefesh) {

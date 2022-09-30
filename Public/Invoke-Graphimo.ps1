@@ -11,7 +11,10 @@
         [switch] $FullUri
     )
     if ($Headers.MsalToken) {
-
+        if ($Headers.Splat) {
+            $Splat = $Headers.Splat
+            $Headers = Connect-MsalToken -Authorization $Headers
+        }
     } else {
         # This forces a reconnect of session in case it's about to time out. If it's not timeouting a cache value is used
         if ($Headers.Splat) {
