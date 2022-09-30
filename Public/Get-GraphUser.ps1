@@ -19,6 +19,12 @@
         [string] $OrderBy,
         [switch] $IncludeManager
     )
+    if ($Property -contains 'EmployeeType') {
+        $BaseURI = 'https://graph.microsoft.com/beta'
+    } else {
+        $BaseURI = 'https://graph.microsoft.com/v1.0'
+    }
+
     if ($UserPrincipalName) {
         $RelativeURI = '/users'
         $QueryParameter = @{
@@ -54,5 +60,5 @@
     }
 
     Remove-EmptyValue -Hashtable $QueryParameter
-    Invoke-Graphimo -Uri $RelativeURI -Method GET -Headers $Headers -QueryParameter $QueryParameter
+    Invoke-Graphimo -Uri $RelativeURI -Method GET -Headers $Headers -QueryParameter $QueryParameter -BaseUri $BaseURI
 }
