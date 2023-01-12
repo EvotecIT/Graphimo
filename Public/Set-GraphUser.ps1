@@ -28,7 +28,23 @@
         [string] $EmployeeType,
         [switch] $ShowInAddressList,
         [alias('HireDate')][DateTime] $StartDate,
-        [alias('CustomProperty')][System.Collections.IDictionary] $CustomProperties
+        [alias('CustomProperty')][System.Collections.IDictionary] $CustomProperties,
+        [string] $ExtensionAttribute1,
+        [string] $ExtensionAttribute2,
+        [string] $ExtensionAttribute3,
+        [string] $ExtensionAttribute4,
+        [string] $ExtensionAttribute5,
+        [string] $ExtensionAttribute6,
+        [string] $ExtensionAttribute7,
+        [string] $ExtensionAttribute8,
+        [string] $ExtensionAttribute9,
+        [string] $ExtensionAttribute10,
+        [string] $ExtensionAttribute11,
+        [string] $ExtensionAttribute12,
+        [string] $ExtensionAttribute13,
+        [string] $ExtensionAttribute14,
+        [string] $ExtensionAttribute15,
+        [System.Collections.IDictionary] $OnPremisesExtensionAttributes
     )
     $Body = [ordered]@{}
     # https://docs.microsoft.com/en-us/graph/api/resources/user?view=graph-rest-1.0
@@ -109,10 +125,60 @@
     foreach ($Property in $CustomProperties.Keys) {
         $Body[$Property] = $CustomProperties[$Property]
     }
+
+    $Body['onPremisesExtensionAttributes'] = [ordered] @{}
+    if ($PSBoundParameters.ContainsKey('ExtensionAttribute1')) {
+        $Body['onPremisesExtensionAttributes']['extensionAttribute1'] = $ExtensionAttribute1
+    }
+    if ($PSBoundParameters.ContainsKey('ExtensionAttribute2')) {
+        $Body['onPremisesExtensionAttributes']['extensionAttribute2'] = $ExtensionAttribute2
+    }
+    if ($PSBoundParameters.ContainsKey('ExtensionAttribute3')) {
+        $Body['onPremisesExtensionAttributes']['extensionAttribute3'] = $ExtensionAttribute3
+    }
+    if ($PSBoundParameters.ContainsKey('ExtensionAttribute4')) {
+        $Body['onPremisesExtensionAttributes']['extensionAttribute4'] = $ExtensionAttribute4
+    }
+    if ($PSBoundParameters.ContainsKey('ExtensionAttribute5')) {
+        $Body['onPremisesExtensionAttributes']['extensionAttribute5'] = $ExtensionAttribute5
+    }
+    if ($PSBoundParameters.ContainsKey('ExtensionAttribute6')) {
+        $Body['onPremisesExtensionAttributes']['extensionAttribute6'] = $ExtensionAttribute6
+    }
+    if ($PSBoundParameters.ContainsKey('ExtensionAttribute7')) {
+        $Body['onPremisesExtensionAttributes']['extensionAttribute7'] = $ExtensionAttribute7
+    }
+    if ($PSBoundParameters.ContainsKey('ExtensionAttribute8')) {
+        $Body['onPremisesExtensionAttributes']['extensionAttribute8'] = $ExtensionAttribute8
+    }
+    if ($PSBoundParameters.ContainsKey('ExtensionAttribute9')) {
+        $Body['onPremisesExtensionAttributes']['extensionAttribute9'] = $ExtensionAttribute9
+    }
+    if ($PSBoundParameters.ContainsKey('ExtensionAttribute10')) {
+        $Body['onPremisesExtensionAttributes']['extensionAttribute10'] = $ExtensionAttribute10
+    }
+    if ($PSBoundParameters.ContainsKey('ExtensionAttribute11')) {
+        $Body['onPremisesExtensionAttributes']['extensionAttribute11'] = $ExtensionAttribute11
+    }
+    if ($PSBoundParameters.ContainsKey('ExtensionAttribute12')) {
+        $Body['onPremisesExtensionAttributes']['extensionAttribute12'] = $ExtensionAttribute12
+    }
+    if ($PSBoundParameters.ContainsKey('ExtensionAttribute13')) {
+        $Body['onPremisesExtensionAttributes']['extensionAttribute13'] = $ExtensionAttribute13
+    }
+    if ($PSBoundParameters.ContainsKey('ExtensionAttribute14')) {
+        $Body['onPremisesExtensionAttributes']['extensionAttribute14'] = $ExtensionAttribute14
+    }
+    if ($PSBoundParameters.ContainsKey('ExtensionAttribute15')) {
+        $Body['onPremisesExtensionAttributes']['extensionAttribute15'] = $ExtensionAttribute15
+    }
     if ($ID) {
         $URI = "/users/$ID"
     } else {
         $URI = "/users/$SearchUserPrincipalName"
+    }
+    if ($Body['onPremisesExtensionAttributes'].Count -eq 0) {
+        $Body.Remove('onPremisesExtensionAttributes')
     }
     if ($Body.Count -gt 0) {
         Invoke-Graphimo -Uri $URI -Method PATCH -Headers $Headers -Body $Body -BaseUri $BaseUri
