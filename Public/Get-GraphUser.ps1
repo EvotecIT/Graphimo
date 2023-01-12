@@ -24,6 +24,14 @@
     } else {
         $BaseURI = 'https://graph.microsoft.com/v1.0'
     }
+    $NewProperties = foreach ($P in $Property) {
+        if ($P -like "extensionAttribute*") {
+            'onPremisesExtensionAttributes'
+        } else {
+            $P
+        }
+    }
+    $Property = $NewProperties | Sort-Object -Unique
 
     if ($UserPrincipalName) {
         $RelativeURI = '/users'
