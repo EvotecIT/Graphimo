@@ -60,5 +60,11 @@
     }
 
     Remove-EmptyValue -Hashtable $QueryParameter
-    Invoke-Graphimo -Uri $RelativeURI -Method GET -Headers $Headers -QueryParameter $QueryParameter -BaseUri $BaseURI
+
+    $Output = Invoke-Graphimo -Uri $RelativeURI -Method GET -Headers $Headers -QueryParameter $QueryParameter -BaseUri $BaseURI
+    if ($Property -contains 'onPremisesExtensionAttributes') {
+        Convert-GraphInternalUser -InputObject $Output
+    } else {
+        $Output
+    }
 }
