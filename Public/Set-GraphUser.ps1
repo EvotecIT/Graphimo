@@ -3,6 +3,7 @@
     param(
         [parameter(Mandatory)][alias('Authorization')][System.Collections.IDictionary] $Headers,
         [alias('UserID')][string] $ID,
+        [string] $SearchUserPrincipalName,
         [string] $UserPrincipalName,
         [string] $Name,
         [alias('AccountEnabled')][nullable[bool]] $Enabled,
@@ -41,6 +42,9 @@
     }
     if ($PSBoundParameters.ContainsKey('EmployeeId')) {
         $Body['employeeId'] = $EmployeeId
+    }
+    if ($PSBoundParameters.ContainsKey('UserPrincipalName')) {
+        $Body['userPrincipalName'] = $UserPrincipalName
     }
     if ($PSBoundParameters.ContainsKey('MailNickname')) {
         $Body['mailNickname'] = $MailNickname
@@ -108,7 +112,7 @@
     if ($ID) {
         $URI = "/users/$ID"
     } else {
-        $URI = "/users/$UserPrincipalName"
+        $URI = "/users/$SearchUserPrincipalName"
     }
     if ($Body.Count -gt 0) {
         Invoke-Graphimo -Uri $URI -Method PATCH -Headers $Headers -Body $Body -BaseUri $BaseUri
