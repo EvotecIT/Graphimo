@@ -5,7 +5,9 @@
         [string] $Name,
         [Parameter(Mandatory)][string] $EmailAddress,
         [switch] $SendInvitationMessage,
-        [string] $InviteRedirectUrl = "https://portal.office.com"
+        [string] $InviteRedirectUrl = "https://portal.office.com",
+        [switch] $ResetRedemption,
+        [string] $InvitedUserID
     )
     $URI = '/invitations'
     $body = [ordered]@{
@@ -13,6 +15,12 @@
         'invitedUserEmailAddress' = $EmailAddress
         'inviteRedirectUrl'       = $InviteRedirectUrl
         'sendInvitationMessage'   = $SendInvitationMessage.IsPresent
+        'resetRedemption'         = $ResetRedemption.IsPresent
+    }
+    if ($InvitedUserID) {
+        $Body['invitedUser'] = @{
+            'id' = $InvitedUserID
+        }
     }
     Invoke-Graphimo -Uri $URI -Method POST -Headers $Headers -Body $Body
 }
