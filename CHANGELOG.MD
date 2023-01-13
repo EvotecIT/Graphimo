@@ -1,4 +1,9 @@
-﻿### 0.0.15 - 2022.09.30
+﻿### 0.0.16 - 2023.01.13
+- Added support for extensionAttributes
+- Added support to limit output to First X entries
+- Improve searcing username when using special characters
+
+### 0.0.15 - 2022.09.30
 - Support for MsolToken refresh
 
 ### 0.0.14 - 2022.09.30
