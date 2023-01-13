@@ -181,7 +181,8 @@
         $Body.Remove('onPremisesExtensionAttributes')
     }
     if ($Body.Count -gt 0) {
-        Invoke-Graphimo -Uri $URI -Method PATCH -Headers $Headers -Body $Body -BaseUri $BaseUri
+        $UriEncoded = [System.Web.HttpUtility]::UrlEncode($Uri)
+        Invoke-Graphimo -Uri $UriEncoded -Method PATCH -Headers $Headers -Body $Body -BaseUri $BaseUri
     } else {
         Write-Warning -Message "Set-GraphUser - No changes were made to the user, as no field to change."
     }
