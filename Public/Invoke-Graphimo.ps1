@@ -73,6 +73,8 @@
                     $First = $First - $FoundUsers.Count
                     $FoundUsers
                 }
+            } else {
+                $FoundUsers
             }
             if ($OutputQuery.'@odata.nextLink') {
                 $RestSplat.Uri = $OutputQuery.'@odata.nextLink'
