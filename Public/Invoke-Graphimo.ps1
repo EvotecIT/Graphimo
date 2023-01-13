@@ -8,7 +8,8 @@
         [string] $ContentType = "application/json; charset=UTF-8",
         [System.Collections.IDictionary] $Body,
         [System.Collections.IDictionary] $QueryParameter,
-        [switch] $FullUri
+        [switch] $FullUri,
+        [int] $First
     )
     if ($Headers.MsalToken) {
         if ($Headers.Splat) {
@@ -60,11 +61,22 @@
             Write-Verbose "Invoke-Graphimo - $($WhatIfInformation)over URI $($RestSplat.Uri)"
             $OutputQuery = Invoke-RestMethod @RestSplat -Verbose:$false
             if ($OutputQuery.value) {
-                $OutputQuery.value
+                $FoundUsers = $OutputQuery.value
+            }
+            if ($First) {
+                if ($FoundUsers.Count -eq $First) {
+                    return $FoundUsers
+                } elseif ($FoundUsers.Count -gt $First) {
+                    $FoundUsers = $FoundUsers | Select-Object -First $First
+                    return $FoundUsers
+                } else {
+                    $First = $First - $FoundUsers.Count
+                    $FoundUsers
+                }
             }
             if ($OutputQuery.'@odata.nextLink') {
                 $RestSplat.Uri = $OutputQuery.'@odata.nextLink'
-                $MoreData = Invoke-Graphimo @RestSplat -FullUri
+                $MoreData = Invoke-Graphimo @RestSplat -FullUri -First $First
                 if ($MoreData) {
                     $MoreData
                 }
