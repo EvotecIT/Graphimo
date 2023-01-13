@@ -17,7 +17,8 @@
 
         [parameter(ParameterSetName = 'Filter')][string] $Filter,
         [string] $OrderBy,
-        [switch] $IncludeManager
+        [switch] $IncludeManager,
+        [int] $First
     )
     if ($Property -contains 'EmployeeType') {
         $BaseURI = 'https://graph.microsoft.com/beta'
@@ -31,7 +32,7 @@
             $P
         }
     }
-    $Property = $NewProperties | Sort-Object -Unique
+    $Property = $NewProperties | Select-Object -Unique
 
     if ($UserPrincipalName) {
         $RelativeURI = '/users'
@@ -69,10 +70,9 @@
 
     Remove-EmptyValue -Hashtable $QueryParameter
 
-    $Output = Invoke-Graphimo -Uri $RelativeURI -Method GET -Headers $Headers -QueryParameter $QueryParameter -BaseUri $BaseURI
     if ($Property -contains 'onPremisesExtensionAttributes') {
-        Convert-GraphInternalUser -InputObject $Output
+        Invoke-Graphimo -Uri $RelativeURI -Method GET -Headers $Headers -QueryParameter $QueryParameter -BaseUri $BaseURI -First $First | Convert-GraphInternalUser
     } else {
-        $Output
+        Invoke-Graphimo -Uri $RelativeURI -Method GET -Headers $Headers -QueryParameter $QueryParameter -BaseUri $BaseURI -First $First
     }
 }
