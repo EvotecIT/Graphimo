@@ -17,20 +17,22 @@
     #>
     [CmdletBinding()]
     param(
-        [parameter(Mandatory)][PSCustomObject] $InputObject
+        [parameter(Mandatory, ValueFromPipeline)][PSCustomObject[]] $InputObject
     )
-    $InputObject | ForEach-Object {
-        $NewObject = [ordered] @{}
-        $Object = $_
-        foreach ($Property in $Object.PSObject.Properties.Name) {
-            if ($Property -eq 'onPremisesExtensionAttributes') {
-                foreach ($ExtensionAttribute in $Object.onPremisesExtensionAttributes.PSObject.Properties.Name) {
-                    $NewObject[$ExtensionAttribute] = $Object.onPremisesExtensionAttributes.$ExtensionAttribute
+    Process {
+        $InputObject | ForEach-Object {
+            $NewObject = [ordered] @{}
+            $Object = $_
+            foreach ($Property in $Object.PSObject.Properties.Name) {
+                if ($Property -eq 'onPremisesExtensionAttributes') {
+                    foreach ($ExtensionAttribute in $Object.onPremisesExtensionAttributes.PSObject.Properties.Name) {
+                        $NewObject[$ExtensionAttribute] = $Object.onPremisesExtensionAttributes.$ExtensionAttribute
+                    }
+                } else {
+                    $NewObject[$Property] = $Object.$Property
                 }
-            } else {
-                $NewObject[$Property] = $Object.$Property
             }
+            [PSCustomObject] $NewObject
         }
-        [PSCustomObject] $NewObject
     }
 }
