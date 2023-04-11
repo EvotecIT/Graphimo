@@ -60,28 +60,32 @@
         if ($Method -eq 'GET') {
             Write-Verbose "Invoke-Graphimo - $($WhatIfInformation)over URI $($RestSplat.Uri)"
             $OutputQuery = Invoke-RestMethod @RestSplat -Verbose:$false
-            if ($OutputQuery.value) {
-                $FoundUsers = $OutputQuery.value
-            }
-            if ($First) {
-                if ($FoundUsers.Count -eq $First) {
-                    return $FoundUsers
-                } elseif ($FoundUsers.Count -gt $First) {
-                    $FoundUsers = $FoundUsers | Select-Object -First $First
-                    return $FoundUsers
-                } else {
-                    $First = $First - $FoundUsers.Count
-                    $FoundUsers
-                }
-            } else {
-                $FoundUsers
-            }
+            # if ($OutputQuery.value) {
+            #     $FoundUsers = $OutputQuery.value
+            # }
+            # if ($First) {
+            #     if ($FoundUsers.Count -eq $First) {
+            #         return $FoundUsers
+            #     } elseif ($FoundUsers.Count -gt $First) {
+            #         $FoundUsers = $FoundUsers | Select-Object -First $First
+            #         return $FoundUsers
+            #     } else {
+            #         $First = $First - $FoundUsers.Count
+            #         $FoundUsers
+            #     }
+            # } else {
+            #     $FoundUsers
+            # }
+            $FoundUsers = Invoke-InternalGraphimo -OutputQuery $OutputQuery -First $First
+            $FoundUsers
             if ($OutputQuery.'@odata.nextLink') {
-                $RestSplat.Uri = $OutputQuery.'@odata.nextLink'
-                $MoreData = Invoke-Graphimo @RestSplat -FullUri -First $First
-                if ($MoreData) {
-                    $MoreData
-                }
+                Do {
+                    $RestSplat.Uri = $OutputQuery.'@odata.nextLink'
+                    #$MoreData = Invoke-Graphimo @RestSplat -FullUri -First $First
+                    $OutputQuery = Invoke-RestMethod @RestSplat -Verbose:$true
+                    $FoundUsers = Invoke-InternalGraphimo -OutputQuery $OutputQuery -First $First -CurrentCount $FoundUsers.Count
+                    $FoundUsers
+                } Until ($OutputQuery.Value.Count -lt $First -or $null -eq $OutputQuery.'@odata.nextLink')
             }
         } else {
             Write-Verbose "Invoke-Graphimo - $($WhatIfInformation)over URI $($RestSplat.Uri)"
