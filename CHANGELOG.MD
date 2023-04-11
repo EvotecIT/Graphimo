@@ -1,4 +1,7 @@
-﻿### 0.0.17 - 2023.04.11
+﻿### 0.0.18 - 2023.04.11
+- Fixes for edge cases
+
+### 0.0.17 - 2023.04.11
 - Fix `Stackoverflow` in Invoke-Graphimo
 
 ### 0.0.16 - 2023.01.13
