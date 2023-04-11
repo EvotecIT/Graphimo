@@ -82,7 +82,7 @@
     }
     Write-Verbose "Connect-Graphimo - EndPoint $($RestSplat['Uri'])"
     try {
-        $Authorization = Invoke-RestMethod @RestSplat
+        $Authorization = Invoke-RestMethod @RestSplat -Verbose:$false
         $Key = [ordered] @{
             'Authorization' = "$($Authorization.token_type) $($Authorization.access_token)"
             'Extended'      = $Authorization
