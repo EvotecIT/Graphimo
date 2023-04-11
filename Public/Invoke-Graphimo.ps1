@@ -76,16 +76,21 @@
             # } else {
             #     $FoundUsers
             # }
+            $Count = 1
             $FoundUsers = Invoke-InternalGraphimo -OutputQuery $OutputQuery -First $First
             $FoundUsers
+            $CurrentCount = $FoundUsers.Count
             if ($OutputQuery.'@odata.nextLink') {
                 Do {
                     $RestSplat.Uri = $OutputQuery.'@odata.nextLink'
                     #$MoreData = Invoke-Graphimo @RestSplat -FullUri -First $First
-                    $OutputQuery = Invoke-RestMethod @RestSplat -Verbose:$true
-                    $FoundUsers = Invoke-InternalGraphimo -OutputQuery $OutputQuery -First $First -CurrentCount $FoundUsers.Count
+                    Write-Verbose "Invoke-Graphimo - $($WhatIfInformation)NextLink (Page $Count/Current Count: $($CurrentCount))) over URI $($RestSplat.Uri)"
+                    $OutputQuery = Invoke-RestMethod @RestSplat -Verbose:$false
+                    $FoundUsers = Invoke-InternalGraphimo -OutputQuery $OutputQuery -First $First -CurrentCount $CurrentCount
                     $FoundUsers
-                } Until ($OutputQuery.Value.Count -lt $First -or $null -eq $OutputQuery.'@odata.nextLink')
+                    $Count++
+                    $CurrentCount = $CurrentCount + $FoundUsers.Count
+                } Until ($CurrentCount -ge $First -or $null -eq $OutputQuery.'@odata.nextLink')
             }
         } else {
             Write-Verbose "Invoke-Graphimo - $($WhatIfInformation)over URI $($RestSplat.Uri)"
