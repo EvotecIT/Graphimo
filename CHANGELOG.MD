@@ -1,4 +1,7 @@
-﻿### 0.0.16 - 2023.01.13
+﻿### 0.0.17 - 2023.04.11
+- Fix `Stackoverflow` in Invoke-Graphimo
+
+### 0.0.16 - 2023.01.13
 - Added support for extensionAttributes
 - Added support to limit output to First X entries
 - Improve searcing username when using special characters
