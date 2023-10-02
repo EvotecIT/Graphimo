@@ -7,7 +7,8 @@
         [switch] $SendInvitationMessage,
         [string] $InviteRedirectUrl = "https://portal.office.com",
         [switch] $ResetRedemption,
-        [string] $InvitedUserID
+        [string] $InvitedUserID,
+        [ValidateSet('Member', 'Guest')][string] $UserType
     )
     $URI = '/invitations'
     $body = [ordered]@{
@@ -16,6 +17,9 @@
         'inviteRedirectUrl'       = $InviteRedirectUrl
         'sendInvitationMessage'   = $SendInvitationMessage.IsPresent
         'resetRedemption'         = $ResetRedemption.IsPresent
+    }
+    if ($UserType) {
+        $Body['invitedUserType'] = $UserType
     }
     if ($InvitedUserID) {
         $Body['invitedUser'] = @{
