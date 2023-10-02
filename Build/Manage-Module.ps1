@@ -1,160 +1,100 @@
 ﻿Clear-Host
-Import-Module "C:\Support\GitHub\PSPublishModule\PSPublishModule.psm1" -Force
 
-$Configuration = @{
-    Information = @{
-        ModuleName        = 'Graphimo'
-        DirectoryProjects = 'C:\Support\GitHub'
+Invoke-ModuleBuild -ModuleName 'Graphimo' {
+    # Usual defaults as per standard module
+    $Manifest = @{
+        # Version number of this module.
+        ModuleVersion        = '0.0.X'
+        # Supported PSEditions
+        CompatiblePSEditions = @('Desktop', 'Core')
+        # ID used to uniquely identify this module
+        GUID                 = '48605140-a2a9-44f3-b682-3efc5cc9f2c1'
+        # Author of this module
+        Author               = 'Przemyslaw Klys'
+        # Company or vendor of this module
+        CompanyName          = 'Evotec'
+        # Copyright statement for this module
+        Copyright            = 'Przemyslaw Klys. All rights reserved.'
+        # Description of the functionality provided by this module
+        Description          = 'Module that helps managing some tasks on Office 365/Azure with Microsoft Graph'
+        # Minimum version of the Windows PowerShell engine required by this module
+        PowerShellVersion    = '5.1'
+        # Private data to pass to the module specified in RootModule/ModuleToProcess. This may also contain a PSData hashtable with additional module metadata used by PowerShell.
+        Tags                 = @('Windows', 'MacOS', 'Linux', 'Office365', 'Graph', 'Azure')
 
-        Manifest          = @{
-            # Version number of this module.
-            ModuleVersion        = '0.0.X'
-            # Supported PSEditions
-            CompatiblePSEditions = @('Desktop', 'Core')
-            # ID used to uniquely identify this module
-            GUID                 = '48605140-a2a9-44f3-b682-3efc5cc9f2c1'
-            # Author of this module
-            Author               = 'Przemyslaw Klys'
-            # Company or vendor of this module
-            CompanyName          = 'Evotec'
-            # Copyright statement for this module
-            Copyright            = 'Przemyslaw Klys. All rights reserved.'
-            # Description of the functionality provided by this module
-            Description          = 'Module that helps managing some tasks on Office 365/Azure with Microsoft Graph'
-            # Minimum version of the Windows PowerShell engine required by this module
-            PowerShellVersion    = '5.1'
-            # Private data to pass to the module specified in RootModule/ModuleToProcess. This may also contain a PSData hashtable with additional module metadata used by PowerShell.
-            Tags                 = @('Windows', 'MacOS', 'Linux', 'Office365', 'Graph', 'Azure')
+        #IconUri              = 'https://evotec.xyz/wp-content/uploads/2018/12/PSWriteHTML.png'
 
-            #IconUri              = 'https://evotec.xyz/wp-content/uploads/2018/12/PSWriteHTML.png'
+        ProjectUri           = 'https://github.com/EvotecIT/Graphimo'
 
-            ProjectUri           = 'https://github.com/EvotecIT/Graphimo'
-
-            RequiredModules      = @(
-                @{ ModuleName = 'PSSharedGoods'; ModuleVersion = "Latest"; Guid = 'ee272aa8-baaa-4edf-9f45-b6d6f7d844fe' }
-            )
-        }
+        # RequiredModules      = @(
+        #  @{ ModuleName = 'PSSharedGoods'; ModuleVersion = "Latest"; Guid = 'ee272aa8-baaa-4edf-9f45-b6d6f7d844fe' }
+        # )
     }
-    Options     = @{
-        Merge             = @{
-            Sort           = 'None'
-            FormatCodePSM1 = @{
-                Enabled           = $true
-                RemoveComments    = $false
-                FormatterSettings = @{
-                    IncludeRules = @(
-                        'PSPlaceOpenBrace',
-                        'PSPlaceCloseBrace',
-                        'PSUseConsistentWhitespace',
-                        'PSUseConsistentIndentation',
-                        'PSAlignAssignmentStatement',
-                        'PSUseCorrectCasing'
-                    )
+    New-ConfigurationManifest @Manifest
 
-                    Rules        = @{
-                        PSPlaceOpenBrace           = @{
-                            Enable             = $true
-                            OnSameLine         = $true
-                            NewLineAfter       = $true
-                            IgnoreOneLineBlock = $true
-                        }
+    New-ConfigurationModule -Type RequiredModule -Name 'PSSharedGoods' -Guid Auto -Version Latest
+    New-ConfigurationModule -Type ApprovedModule -Name 'PSSharedGoods', 'PSWriteColor', 'Connectimo', 'PSUnifi', 'PSWebToolbox', 'PSMyPassword', 'ADEssentials'
+    New-ConfigurationModule -Type ExternalModule -Name @(
+        'Microsoft.PowerShell.Utility'
+        'Microsoft.PowerShell.Security'
+    )
 
-                        PSPlaceCloseBrace          = @{
-                            Enable             = $true
-                            NewLineAfter       = $false
-                            IgnoreOneLineBlock = $true
-                            NoEmptyLineBefore  = $false
-                        }
+    New-ConfigurationModuleSkip -IgnoreModuleName @(
+        'MSAL.PS'
+    )
+    $ConfigurationFormat = [ordered] @{
+        RemoveComments                              = $true
+        RemoveEmptyLines                            = $true
 
-                        PSUseConsistentIndentation = @{
-                            Enable              = $true
-                            Kind                = 'space'
-                            PipelineIndentation = 'IncreaseIndentationAfterEveryPipeline'
-                            IndentationSize     = 4
-                        }
+        PlaceOpenBraceEnable                        = $true
+        PlaceOpenBraceOnSameLine                    = $true
+        PlaceOpenBraceNewLineAfter                  = $true
+        PlaceOpenBraceIgnoreOneLineBlock            = $false
 
-                        PSUseConsistentWhitespace  = @{
-                            Enable          = $true
-                            CheckInnerBrace = $true
-                            CheckOpenBrace  = $true
-                            CheckOpenParen  = $true
-                            CheckOperator   = $true
-                            CheckPipe       = $true
-                            CheckSeparator  = $true
-                        }
+        PlaceCloseBraceEnable                       = $true
+        PlaceCloseBraceNewLineAfter                 = $true
+        PlaceCloseBraceIgnoreOneLineBlock           = $false
+        PlaceCloseBraceNoEmptyLineBefore            = $true
 
-                        PSAlignAssignmentStatement = @{
-                            Enable         = $true
-                            CheckHashtable = $true
-                        }
+        UseConsistentIndentationEnable              = $true
+        UseConsistentIndentationKind                = 'space'
+        UseConsistentIndentationPipelineIndentation = 'IncreaseIndentationAfterEveryPipeline'
+        UseConsistentIndentationIndentationSize     = 4
 
-                        PSUseCorrectCasing         = @{
-                            Enable = $true
-                        }
-                    }
-                }
-            }
-            FormatCodePSD1 = @{
-                Enabled        = $true
-                RemoveComments = $false
-            }
-            Integrate      = @{
-                ApprovedModules = @('PSSharedGoods', 'PSWriteColor', 'Connectimo', 'PSUnifi', 'PSWebToolbox', 'PSMyPassword')
-            }
-        }
-        Standard          = @{
-            FormatCodePSM1 = @{
+        UseConsistentWhitespaceEnable               = $true
+        UseConsistentWhitespaceCheckInnerBrace      = $true
+        UseConsistentWhitespaceCheckOpenBrace       = $true
+        UseConsistentWhitespaceCheckOpenParen       = $true
+        UseConsistentWhitespaceCheckOperator        = $true
+        UseConsistentWhitespaceCheckPipe            = $true
+        UseConsistentWhitespaceCheckSeparator       = $true
 
-            }
-            FormatCodePSD1 = @{
-                Enabled = $true
-                #RemoveComments = $true
-            }
-        }
-        ImportModules     = @{
-            Self            = $true
-            RequiredModules = $false
-            Verbose         = $false
-        }
-        PowerShellGallery = @{
-            ApiKey   = 'C:\Support\Important\PowerShellGalleryAPI.txt'
-            FromFile = $true
-        }
-        GitHub            = @{
-            ApiKey   = 'C:\Support\Important\GithubAPI.txt'
-            FromFile = $true
-            UserName = 'EvotecIT'
-            #RepositoryName = 'PSWriteHTML'
-        }
-        Documentation     = @{
-            Path       = 'Docs'
-            PathReadme = 'Docs\Readme.md'
-        }
+        AlignAssignmentStatementEnable              = $true
+        AlignAssignmentStatementCheckHashtable      = $true
+
+        UseCorrectCasingEnable                      = $true
     }
-    Steps       = @{
-        BuildModule        = @{  # requires Enable to be on to process all of that
-            Enable           = $true
-            DeleteBefore     = $false
-            Merge            = $true
-            MergeMissing     = $true
-            SignMerged       = $true
-            Releases         = $true
-            ReleasesUnpacked = $false
-            RefreshPSD1Only  = $false
-        }
-        BuildDocumentation = $false
-        ImportModules      = @{
-            Self            = $true
-            RequiredModules = $false
-            Verbose         = $false
-        }
-        PublishModule      = @{  # requires Enable to be on to process all of that
-            Enabled      = $false
-            Prerelease   = ''
-            RequireForce = $false
-            GitHub       = $false
-        }
-    }
-}
+    # format PSD1 and PSM1 files when merging into a single file
+    # enable formatting is not required as Configuration is provided
+    New-ConfigurationFormat -ApplyTo 'OnMergePSM1', 'OnMergePSD1' -Sort None @ConfigurationFormat
+    # format PSD1 and PSM1 files within the module
+    # enable formatting is required to make sure that formatting is applied (with default settings)
+    New-ConfigurationFormat -ApplyTo 'DefaultPSD1', 'DefaultPSM1' -EnableFormatting -Sort None
+    # when creating PSD1 use special style without comments and with only required parameters
+    New-ConfigurationFormat -ApplyTo 'DefaultPSD1', 'OnMergePSD1' -PSD1Style 'Minimal'
+    # configuration for documentation, at the same time it enables documentation processing
+    New-ConfigurationDocumentation -Enable:$false -StartClean -UpdateWhenNew -PathReadme 'Docs\Readme.md' -Path 'Docs'
 
-New-PrepareModule -Configuration $Configuration
+    New-ConfigurationImportModule -ImportSelf
+
+    New-ConfigurationBuild -Enable:$true -SignModule -MergeModuleOnBuild -MergeFunctionsFromApprovedModules -CertificateThumbprint '483292C9E317AA13B07BB7A96AE9D1A5ED9E7703'
+
+    # New-ConfigurationTest -TestsPath "$PSScriptRoot\..\Tests" -Enable
+
+    New-ConfigurationArtefact -Type Unpacked -Enable -Path "$PSScriptRoot\..\Artefacts\Unpacked" -AddRequiredModules
+    New-ConfigurationArtefact -Type Packed -Enable -Path "$PSScriptRoot\..\Artefacts\Packed" -ArtefactName '<ModuleName>.v<ModuleVersion>.zip' -AddRequiredModules
+
+    # options for publishing to github/psgallery
+    New-ConfigurationPublish -Type PowerShellGallery -FilePath 'C:\Support\Important\PowerShellGalleryAPI.txt' -Enabled:$true
+    New-ConfigurationPublish -Type GitHub -FilePath 'C:\Support\Important\GitHubAPI.txt' -UserName 'EvotecIT' -Enabled:$true
+} -ExitCode
