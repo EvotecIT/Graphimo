@@ -1,4 +1,7 @@
-﻿### 0.0.18 - 2023.04.11
+﻿### 0.0.19 - 2023.10.02
+- Improves `Import-GraphGuest` with ability top choose UserType
+
+### 0.0.18 - 2023.04.11
 - Fixes for edge cases
 
 ### 0.0.17 - 2023.04.11
