@@ -1,4 +1,7 @@
-﻿### 0.0.19 - 2023.10.02
+﻿### 0.0.20 - 2023.10.20
+- Improve `Get-GraphUser` to not crash when no data is returned when using onPremisesExtensionAttributes
+
+### 0.0.19 - 2023.10.02
 - Improves `Import-GraphGuest` with ability top choose UserType
 
 ### 0.0.18 - 2023.04.11
