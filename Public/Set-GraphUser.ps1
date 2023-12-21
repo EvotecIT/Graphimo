@@ -44,7 +44,8 @@
         [string] $ExtensionAttribute13,
         [string] $ExtensionAttribute14,
         [string] $ExtensionAttribute15,
-        [System.Collections.IDictionary] $OnPremisesExtensionAttributes
+        [System.Collections.IDictionary] $OnPremisesExtensionAttributes,
+        [string] $UserType
     )
     $Body = [ordered]@{}
     # https://docs.microsoft.com/en-us/graph/api/resources/user?view=graph-rest-1.0
@@ -171,6 +172,9 @@
     }
     if ($PSBoundParameters.ContainsKey('ExtensionAttribute15')) {
         $Body['onPremisesExtensionAttributes']['extensionAttribute15'] = $ExtensionAttribute15
+    }
+    if ($PSBoundParameters.ContainsKey("UserType")) {
+        $Body['userType'] = $UserType
     }
     if ($ID) {
         $URI = "/users/$ID"
