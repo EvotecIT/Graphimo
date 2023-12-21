@@ -3,10 +3,14 @@
     param(
         [Array] $OutputQuery,
         [int] $First,
-        [int] $CurrentCount
+        [int] $CurrentCount,
+        [string] $CountVariable
     )
     if ($OutputQuery.value) {
         $FoundUsers = $OutputQuery.value
+    }
+    if ($CountVariable) {
+        Set-Variable -Name $CountVariable -Value $OutputQuery.'@odata.count' -Scope Global
     }
     if ($First) {
         if ($CurrentCount) {

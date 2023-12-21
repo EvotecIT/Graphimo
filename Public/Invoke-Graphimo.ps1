@@ -9,7 +9,9 @@
         [System.Collections.IDictionary] $Body,
         [System.Collections.IDictionary] $QueryParameter,
         [switch] $FullUri,
-        [int] $First
+        [string] $CountVariable,
+        [int] $First,
+        [string] $ConsistencyLevel
     )
     if ($Headers.MsalToken) {
         if ($Headers.Splat) {
@@ -54,10 +56,15 @@
     if ($RestSplat['Body']) {
         $WhatIfInformation = "Invoking [$Method] " + [System.Environment]::NewLine + $RestSplat['Body'] + [System.Environment]::NewLine
     } else {
-        $WhatIfInformation = "Invoking [$Method] "
+        $WhatIfInformation = "Invoking [$Method] / [ConsistencyLevel: $($ConsistencyLevel)]"
+    }
+    if ($ConsistencyLevel) {
+        $RestSplat.Headers['ConsistencyLevel'] = $ConsistencyLevel
     }
     try {
         if ($Method -eq 'GET') {
+            #$RestSplat | Out-String | Write-Verbose
+            #$RestSplat.Headers | Out-String | Write-Verbose
             Write-Verbose "Invoke-Graphimo - $($WhatIfInformation)over URI $($RestSplat.Uri)"
             $OutputQuery = Invoke-RestMethod @RestSplat -Verbose:$false
             # if ($OutputQuery.value) {
@@ -77,7 +84,7 @@
             #     $FoundUsers
             # }
             $Count = 1
-            [Array] $FoundUsers = Invoke-InternalGraphimo -OutputQuery $OutputQuery -First $First
+            [Array] $FoundUsers = Invoke-InternalGraphimo -OutputQuery $OutputQuery -First $First -CountVariable $CountVariable
             $CurrentCount = $FoundUsers.Count
             if ($First -gt 0 -and $CurrentCount -ge $First) {
                 return $FoundUsers
@@ -90,7 +97,7 @@
                     #$MoreData = Invoke-Graphimo @RestSplat -FullUri -First $First
                     Write-Verbose "Invoke-Graphimo - $($WhatIfInformation)NextLink (Page $Count/Current Count: $($CurrentCount))) over URI $($RestSplat.Uri)"
                     $OutputQuery = Invoke-RestMethod @RestSplat -Verbose:$false
-                    [Array] $FoundUsers = Invoke-InternalGraphimo -OutputQuery $OutputQuery -First $First -CurrentCount $CurrentCount
+                    [Array] $FoundUsers = Invoke-InternalGraphimo -OutputQuery $OutputQuery -First $First -CurrentCount $CurrentCount -CountVariable $CountVariable
                     $FoundUsers
                     $Count++
                     $CurrentCount = $CurrentCount + $FoundUsers.Count
