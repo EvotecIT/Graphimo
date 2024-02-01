@@ -63,26 +63,8 @@
     }
     try {
         if ($Method -eq 'GET') {
-            #$RestSplat | Out-String | Write-Verbose
-            #$RestSplat.Headers | Out-String | Write-Verbose
             Write-Verbose "Invoke-Graphimo - $($WhatIfInformation)over URI $($RestSplat.Uri)"
             $OutputQuery = Invoke-RestMethod @RestSplat -Verbose:$false
-            # if ($OutputQuery.value) {
-            #     $FoundUsers = $OutputQuery.value
-            # }
-            # if ($First) {
-            #     if ($FoundUsers.Count -eq $First) {
-            #         return $FoundUsers
-            #     } elseif ($FoundUsers.Count -gt $First) {
-            #         $FoundUsers = $FoundUsers | Select-Object -First $First
-            #         return $FoundUsers
-            #     } else {
-            #         $First = $First - $FoundUsers.Count
-            #         $FoundUsers
-            #     }
-            # } else {
-            #     $FoundUsers
-            # }
             $Count = 1
             [Array] $FoundUsers = Invoke-InternalGraphimo -OutputQuery $OutputQuery -First $First -CountVariable $CountVariable
             $CurrentCount = $FoundUsers.Count
@@ -94,7 +76,6 @@
             if ($OutputQuery.'@odata.nextLink') {
                 Do {
                     $RestSplat.Uri = $OutputQuery.'@odata.nextLink'
-                    #$MoreData = Invoke-Graphimo @RestSplat -FullUri -First $First
                     Write-Verbose "Invoke-Graphimo - $($WhatIfInformation)NextLink (Page $Count/Current Count: $($CurrentCount))) over URI $($RestSplat.Uri)"
                     $OutputQuery = Invoke-RestMethod @RestSplat -Verbose:$false
                     [Array] $FoundUsers = Invoke-InternalGraphimo -OutputQuery $OutputQuery -First $First -CurrentCount $CurrentCount -CountVariable $CountVariable
@@ -119,7 +100,6 @@
         if ($RestError) {
             try {
                 $ErrorMessage = ConvertFrom-Json -InputObject $RestError
-                # Write-Warning -Message "Invoke-Graphimo - [$($ErrorMessage.error.code)] $($ErrorMessage.error.message), exception: $($_.Exception.Message)"
                 Write-Warning -Message "Invoke-Graphimo - Error: $($_.Exception.Message) $($ErrorMessage.error.message)"
             } catch {
                 Write-Warning -Message "Invoke-Graphimo - Error: $($_.Exception.Message)"
