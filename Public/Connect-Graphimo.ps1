@@ -19,7 +19,9 @@
         [int] $ExpiresTimeout = 30,
         [switch] $ForceRefesh,
 
-        [parameter(Mandatory, ParameterSetName = 'MsalToken')][System.Collections.IDictionary] $MsalToken
+        [parameter(Mandatory, ParameterSetName = 'MsalToken')][System.Collections.IDictionary] $MsalToken,
+
+        [parameter(Mandatory, ParameterSetName = 'MgGraph')][System.Collections.IDictionary] $MgGraph
     )
     # Comparison V1/V2 https://nicolgit.github.io/AzureAD-Endopoint-V1-vs-V2-comparison/
 
@@ -62,6 +64,11 @@
             Splat = $MsalToken
         }
         return Connect-MsalToken -Authorization $Authorization -ExpiresTimeout $ExpiresTimeout -ForceRefesh:$ForceRefesh
+    } elseif ($MgGraph) {
+        Connect-MgGraph @MgGraph
+    } else {
+        Write-Warning -Message "Connect-Graphimo - Error: No Credential, ApplicationKey or MsalToken provided"
+        return
     }
 
     if ($Script:AuthorizationCache[$ApplicationID] -and -not $ForceRefesh) {
