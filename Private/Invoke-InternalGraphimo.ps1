@@ -4,7 +4,8 @@
         [Array] $OutputQuery,
         [int] $First,
         [int] $CurrentCount,
-        [string] $CountVariable
+        [string] $CountVariable,
+        [switch] $MgGraph
     )
     if ($OutputQuery.value) {
         $FoundUsers = $OutputQuery.value
@@ -17,13 +18,15 @@
             $First = $First - $CurrentCount
         }
         if ($FoundUsers.Count -eq $First) {
-            return $FoundUsers
         } elseif ($FoundUsers.Count -gt $First) {
             $FoundUsers = $FoundUsers | Select-Object -First $First
-            return $FoundUsers
         } else {
             $First = $First - $FoundUsers.Count
-            $FoundUsers
+        }
+    }
+    if ($MgGraph -or $Script:MgGraphAuthenticated -eq $true) {
+        foreach ($Object in $FoundUsers) {
+            [PSCustomObject] $Object
         }
     } else {
         $FoundUsers
