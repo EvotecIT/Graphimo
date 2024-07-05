@@ -2,12 +2,12 @@
     [alias('Get-GraphUsers')]
     [cmdletBinding(DefaultParameterSetName = 'Default')]
     param(
-        [parameter(ParameterSetName = 'Default', Mandatory)]
-        [parameter(ParameterSetName = 'EmailAddress', Mandatory)]
-        [parameter(ParameterSetName = 'UserPrincipalName', Mandatory)]
-        [parameter(ParameterSetName = 'Filter', Mandatory)]
-        [parameter(ParameterSetName = 'Id', Mandatory)]
-        [parameter(Mandatory)][alias('Authorization')][System.Collections.IDictionary] $Headers,
+        [parameter(ParameterSetName = 'Default')]
+        [parameter(ParameterSetName = 'EmailAddress')]
+        [parameter(ParameterSetName = 'UserPrincipalName')]
+        [parameter(ParameterSetName = 'Filter')]
+        [parameter(ParameterSetName = 'Id')]
+        [alias('Authorization')][System.Collections.IDictionary] $Headers,
 
         [parameter(ParameterSetName = 'Id')][string] $Id,
         [parameter(ParameterSetName = 'UserPrincipalName')][string] $UserPrincipalName,
@@ -20,8 +20,16 @@
         [switch] $IncludeManager,
         [int] $First,
         [string] $CountVariable,
-        [string] $ConsistencyLevel
+        [string] $ConsistencyLevel,
+
+        [switch] $MgGraph
     )
+
+    if (-not $MgGraph -and -not $Headers -and $Script:MgGraphAuthenticated -ne $true) {
+        Write-Warning -Message "No headers or MgGraph switch provided. Skipping."
+        return
+    }
+
     if ($Property -contains 'EmployeeType') {
         $BaseURI = 'https://graph.microsoft.com/beta'
     } else {
@@ -72,18 +80,32 @@
     if ($CountVariable) {
         $QueryParameter['$count'] = 'true'
     }
-    if ($ConsistencyLevel) {
-        $Headers['consistencyLevel'] = $ConsistencyLevel
-    }
+    # if ($ConsistencyLevel) {
+    #     $Headers['consistencyLevel'] = $ConsistencyLevel
+    # }
 
     Remove-EmptyValue -Hashtable $QueryParameter
 
+    $invokeGraphimoSplat = @{
+        Uri              = $RelativeURI
+        Method           = 'GET'
+        QueryParameter   = $QueryParameter
+        BaseUri          = $BaseURI
+        First            = $First
+        CountVariable    = $CountVariable
+        ConsistencyLevel = $ConsistencyLevel
+        MgGraph          = $MgGraph.IsPresent
+    }
+    if ($Headers) {
+        $invokeGraphimoSplat['Headers'] = $Headers
+    }
+
     if ($Property -contains 'onPremisesExtensionAttributes') {
-        $OutputData = Invoke-Graphimo -Uri $RelativeURI -Method GET -Headers $Headers -QueryParameter $QueryParameter -BaseUri $BaseURI -First $First -CountVariable $CountVariable -ConsistencyLevel $ConsistencyLevel
+        $OutputData = Invoke-Graphimo @invokeGraphimoSplat
         if ($OutputData) {
             $OutputData | Convert-GraphInternalUser
         }
     } else {
-        Invoke-Graphimo -Uri $RelativeURI -Method GET -Headers $Headers -QueryParameter $QueryParameter -BaseUri $BaseURI -First $First -CountVariable $CountVariable -ConsistencyLevel $ConsistencyLevel
+        Invoke-Graphimo @invokeGraphimoSplat
     }
 }
