@@ -19,12 +19,29 @@
         [int] $ExpiresTimeout = 30,
         [switch] $ForceRefesh,
 
-        [parameter(Mandatory, ParameterSetName = 'MsalToken')][System.Collections.IDictionary] $MsalToken
+        [parameter(Mandatory, ParameterSetName = 'MsalToken')][System.Collections.IDictionary] $MsalToken,
+        [parameter(Mandatory, ParameterSetName = 'MsGraphConfiguration')]
+        [System.Collections.IDictionary] $MsGraphConfiguration
     )
     # Comparison V1/V2 https://nicolgit.github.io/AzureAD-Endopoint-V1-vs-V2-comparison/
 
     if (-not $Script:AuthorizationCache) {
         $Script:AuthorizationCache = [ordered] @{}
+    }
+
+    if ($null -ne $MsGraphConfiguration) {
+        if (-not $MsGraphConfiguration.ErrorAction) {
+            $MsGraphConfiguration.ErrorAction = 'Stop'
+        }
+        try {
+            Connect-MgGraph @MsGraphConfiguration
+            $Script:MgGraphAuthenticated = $true
+            return
+        } catch {
+            $ErrorMessage = $_.Exception.Message -replace "`n", " " -replace "`r", " "
+            Write-Warning -Message "Connect-Graphimo - Error: $ErrorMessage"
+            return
+        }
     }
 
     if ($Credential) {
