@@ -1,16 +1,20 @@
 ﻿function Set-GraphManager {
     [cmdletBinding(SupportsShouldProcess)]
     param(
-        [parameter(Mandatory)][alias('Authorization')][System.Collections.IDictionary] $Headers,
+        [parameter()][alias('Authorization')][System.Collections.IDictionary] $Headers,
         [alias('UserID')][string] $ID,
         [string] $UserPrincipalName,
         [string] $Name,
-
-
         [string] $ManagerID,
-        [string] $ManagerDisplayName
-
+        [string] $ManagerDisplayName,
+        [switch] $MgGraph
     )
+
+    if (-not $MgGraph -and -not $Headers -and $Script:MgGraphAuthenticated -ne $true) {
+        Write-Warning -Message "No headers or MgGraph switch provided. Skipping."
+        return
+    }
+
     if ($ID) {
         $URI = "/users/$ID/manager/`$ref"
     } else {
@@ -19,5 +23,5 @@
     $Body = [ordered]@{
         "@odata.id" = "https://graph.microsoft.com/v1.0/users/$ManagerID"
     }
-    Invoke-Graphimo -Uri $URI -Method PUT -Headers $Headers -Body $Body
+    Invoke-Graphimo -Uri $URI -Method PUT -Headers $Headers -Body $Body -MgGraph:$MgGraph.IsPresent
 }
