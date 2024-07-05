@@ -1,4 +1,7 @@
-﻿### 0.0.20 - 2023.10.20
+﻿### 0.2.0 - 2024.07.05
+- Added support for `Connect-MgGraph` by using `-MgGraph` directly in the cmdlet or `Connect-Graphimo -MgGraphConfiguration @{}`
+
+### 0.0.20 - 2023.10.20
 - Improve `Get-GraphUser` to not crash when no data is returned when using onPremisesExtensionAttributes
 
 ### 0.0.19 - 2023.10.02
