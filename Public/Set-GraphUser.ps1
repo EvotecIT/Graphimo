@@ -1,7 +1,7 @@
 ﻿function Set-GraphUser {
     [cmdletBinding(SupportsShouldProcess)]
     param(
-        [parameter(Mandatory)][alias('Authorization')][System.Collections.IDictionary] $Headers,
+        [parameter()][alias('Authorization')][System.Collections.IDictionary] $Headers,
         [alias('UserID')][string] $ID,
         [string] $SearchUserPrincipalName,
         [string] $UserPrincipalName,
@@ -45,8 +45,15 @@
         [string] $ExtensionAttribute14,
         [string] $ExtensionAttribute15,
         [System.Collections.IDictionary] $OnPremisesExtensionAttributes,
-        [string] $UserType
+        [string] $UserType,
+        [switch] $MgGraph
     )
+
+    if (-not $MgGraph -and -not $Headers -and $Script:MgGraphAuthenticated -ne $true) {
+        Write-Warning -Message "No headers or MgGraph switch provided. Skipping."
+        return
+    }
+
     $Body = [ordered]@{}
     # https://docs.microsoft.com/en-us/graph/api/resources/user?view=graph-rest-1.0
     if ($PSBoundParameters.ContainsKey('StartDate')) {
@@ -186,7 +193,7 @@
     }
     if ($Body.Count -gt 0) {
         $UriEncoded = [System.Web.HttpUtility]::UrlEncode($Uri)
-        Invoke-Graphimo -Uri $UriEncoded -Method PATCH -Headers $Headers -Body $Body -BaseUri $BaseUri
+        Invoke-Graphimo -Uri $UriEncoded -Method PATCH -Headers $Headers -Body $Body -BaseUri $BaseUri -MgGraph:$MgGraph.IsPresent
     } else {
         Write-Warning -Message "Set-GraphUser - No changes were made to the user, as no field to change."
     }
