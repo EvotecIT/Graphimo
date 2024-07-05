@@ -1,14 +1,21 @@
 ﻿function Add-GraphGroup {
     [CmdletBinding()]
     param(
-        [parameter(Mandatory)][alias('Authorization')][System.Collections.IDictionary] $Headers,
+        [alias('Authorization')][System.Collections.IDictionary] $Headers,
         [string] $DisplayName,
         [string] $Name,
         [string] $Description,
         [string] $MailNickname,
         [switch] $SecurityEnabled,
-        [switch] $MailEnabled
+        [switch] $MailEnabled,
+        [switch] $MgGraph
     )
+
+    if (-not $MgGraph -and -not $Headers -and $Script:MgGraphAuthenticated -ne $true) {
+        Write-Warning -Message "No headers or MgGraph switch provided. Skipping."
+        return
+    }
+
     $URI = "/groups"
     $BaseUri = 'https://graph.microsoft.com/v1.0'
     $Body = [ordered]@{
@@ -34,6 +41,6 @@
         $Body['mailEnabled'] = $MailEnabled.IsPresent
     }
     if ($Body.Count -gt 0) {
-        Invoke-Graphimo -Uri $URI -Method POST -Headers $Headers -Body $Body -BaseUri $BaseUri
+        Invoke-Graphimo -Uri $URI -Method POST -Headers $Headers -Body $Body -BaseUri $BaseUri -MgGraph:$MgGraph.IsPresent
     }
 }
