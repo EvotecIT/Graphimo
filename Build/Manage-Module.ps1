@@ -4,7 +4,7 @@ Invoke-ModuleBuild -ModuleName 'Graphimo' {
     # Usual defaults as per standard module
     $Manifest = @{
         # Version number of this module.
-        ModuleVersion        = '0.0.X'
+        ModuleVersion        = '0.2.0'
         # Supported PSEditions
         CompatiblePSEditions = @('Desktop', 'Core')
         # ID used to uniquely identify this module
@@ -22,13 +22,7 @@ Invoke-ModuleBuild -ModuleName 'Graphimo' {
         # Private data to pass to the module specified in RootModule/ModuleToProcess. This may also contain a PSData hashtable with additional module metadata used by PowerShell.
         Tags                 = @('Windows', 'MacOS', 'Linux', 'Office365', 'Graph', 'Azure')
 
-        #IconUri              = 'https://evotec.xyz/wp-content/uploads/2018/12/PSWriteHTML.png'
-
         ProjectUri           = 'https://github.com/EvotecIT/Graphimo'
-
-        # RequiredModules      = @(
-        #  @{ ModuleName = 'PSSharedGoods'; ModuleVersion = "Latest"; Guid = 'ee272aa8-baaa-4edf-9f45-b6d6f7d844fe' }
-        # )
     }
     New-ConfigurationManifest @Manifest
 
@@ -40,8 +34,8 @@ Invoke-ModuleBuild -ModuleName 'Graphimo' {
     )
 
     New-ConfigurationModuleSkip -IgnoreModuleName @(
-        'MSAL.PS'
-    )
+        'MSAL.PS', 'Microsoft.Graph.Authentication'
+    ) -IgnoreFunctionName 'Connect-MgGraph', 'Invoke-MgGraphRequest'
     $ConfigurationFormat = [ordered] @{
         RemoveComments                              = $true
         RemoveEmptyLines                            = $true
@@ -95,6 +89,6 @@ Invoke-ModuleBuild -ModuleName 'Graphimo' {
     New-ConfigurationArtefact -Type Packed -Enable -Path "$PSScriptRoot\..\Artefacts\Packed" -ArtefactName '<ModuleName>.v<ModuleVersion>.zip' -AddRequiredModules
 
     # options for publishing to github/psgallery
-    New-ConfigurationPublish -Type PowerShellGallery -FilePath 'C:\Support\Important\PowerShellGalleryAPI.txt' -Enabled:$true
-    New-ConfigurationPublish -Type GitHub -FilePath 'C:\Support\Important\GitHubAPI.txt' -UserName 'EvotecIT' -Enabled:$true
+    #New-ConfigurationPublish -Type PowerShellGallery -FilePath 'C:\Support\Important\PowerShellGalleryAPI.txt' -Enabled:$true
+    #New-ConfigurationPublish -Type GitHub -FilePath 'C:\Support\Important\GitHubAPI.txt' -UserName 'EvotecIT' -Enabled:$true
 } -ExitCode
