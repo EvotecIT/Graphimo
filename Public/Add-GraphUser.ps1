@@ -1,7 +1,7 @@
 ﻿function Add-GraphUser {
     [cmdletBinding(SupportsShouldProcess)]
     param(
-        [parameter(Mandatory)][alias('Authorization')][System.Collections.IDictionary] $Headers,
+        [parameter()][alias('Authorization')][System.Collections.IDictionary] $Headers,
         [Parameter(Mandatory)][string] $UserPrincipalName,
         [string] $Name,
         [parameter(Mandatory)][alias('AccountEnabled')][bool] $Enabled,
@@ -28,8 +28,15 @@
         [string] $EmployeeType,
         [Parameter(Mandatory)][string] $Password,
         [alias('HireDate')][DateTime] $StartDate,
-        [alias('CustomProperty')][System.Collections.IDictionary] $CustomProperties
+        [alias('CustomProperty')][System.Collections.IDictionary] $CustomProperties,
+        [switch] $MgGraph
     )
+
+    if (-not $MgGraph -and -not $Headers -and $Script:MgGraphAuthenticated -ne $true) {
+        Write-Warning -Message "No headers or MgGraph switch provided. Skipping."
+        return
+    }
+
     $URI = "/users"
     $Body = [ordered]@{}
     # https://docs.microsoft.com/en-us/graph/api/resources/user?view=graph-rest-1.0
@@ -118,6 +125,6 @@
 
     #Remove-EmptyValue -Hashtable $Body
     if ($Body.Count -gt 0) {
-        Invoke-Graphimo -Uri $URI -Method POST -Headers $Headers -Body $Body -BaseUri $BaseUri
+        Invoke-Graphimo -Uri $URI -Method POST -Headers $Headers -Body $Body -BaseUri $BaseUri -MgGraph:$MgGraph.IsPresent
     }
 }
