@@ -1,12 +1,19 @@
 ﻿function Get-GraphContact {
     [cmdletBinding()]
     param(
-        [parameter(Mandatory)][alias('Authorization')][System.Collections.IDictionary] $Headers,
+        [parameter()][alias('Authorization')][System.Collections.IDictionary] $Headers,
         [string] $Id,
         [string[]] $Property,
         [string] $Filter,
-        [string] $OrderBy
+        [string] $OrderBy,
+        [switch] $MgGraph
     )
+
+    if (-not $MgGraph -and -not $Headers -and $Script:MgGraphAuthenticated -ne $true) {
+        Write-Warning -Message "No headers or MgGraph switch provided. Skipping."
+        return
+    }
+
     if ($ID) {
         # Query a single group
         $RelativeURI = "/contacts/$ID"
@@ -23,5 +30,5 @@
         }
     }
     Remove-EmptyValue -Hashtable $QueryParameter
-    Invoke-Graphimo -Uri $RelativeURI -Method GET -Headers $Headers -QueryParameter $QueryParameter
+    Invoke-Graphimo -Uri $RelativeURI -Method GET -Headers $Headers -QueryParameter $QueryParameter -MgGraph:$MgGraph.IsPresent
 }
