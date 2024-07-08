@@ -21,7 +21,10 @@
 
         [parameter(Mandatory, ParameterSetName = 'MsalToken')][System.Collections.IDictionary] $MsalToken,
         [parameter(Mandatory, ParameterSetName = 'MsGraphConfiguration')]
-        [System.Collections.IDictionary] $MsGraphConfiguration
+        [System.Collections.IDictionary] $MsGraphConfiguration,
+
+        [parameter(Mandatory, ParameterSetName = 'MsGraphConfigurationSwitch')]
+        [switch] $MgGraph
     )
     # Comparison V1/V2 https://nicolgit.github.io/AzureAD-Endopoint-V1-vs-V2-comparison/
 
@@ -29,7 +32,7 @@
         $Script:AuthorizationCache = [ordered] @{}
     }
 
-    if ($null -ne $MsGraphConfiguration) {
+    if ($null -ne $MsGraphConfiguration -or $MgGraph.IsPresent) {
         if (-not $MsGraphConfiguration.ErrorAction) {
             $MsGraphConfiguration.ErrorAction = 'Stop'
         }
