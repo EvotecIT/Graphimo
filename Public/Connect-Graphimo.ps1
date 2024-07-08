@@ -41,6 +41,7 @@
             $Script:MgGraphAuthenticated = $true
             return
         } catch {
+            $Script:MgGraphAuthenticated = $null
             $ErrorMessage = $_.Exception.Message -replace "`n", " " -replace "`r", " "
             Write-Warning -Message "Connect-Graphimo - Error: $ErrorMessage"
             return
