@@ -33,18 +33,28 @@
     }
 
     if ($null -ne $MsGraphConfiguration -or $MgGraph.IsPresent) {
-        if (-not $MsGraphConfiguration.ErrorAction) {
-            $MsGraphConfiguration.ErrorAction = 'Stop'
-        }
-        try {
-            Connect-MgGraph @MsGraphConfiguration
+        if ($MgGraph.IsPresent) {
+            # We use Microsoft.Graph module instead of Invoke-RestMethod
+            # We assume the connection was done before this function was called
             $Script:MgGraphAuthenticated = $true
             return
-        } catch {
-            $Script:MgGraphAuthenticated = $null
-            $ErrorMessage = $_.Exception.Message -replace "`n", " " -replace "`r", " "
-            Write-Warning -Message "Connect-Graphimo - Error: $ErrorMessage"
-            return
+        } else {
+            if (-not $MsGraphConfiguration.ErrorAction) {
+                $MsGraphConfiguration.ErrorAction = 'Stop'
+            }
+            try {
+                Connect-MgGraph @MsGraphConfiguration
+                $Script:MgGraphAuthenticated = $true
+                return
+            } catch {
+                if ($ErrorActionPreference -eq 'Stop') {
+                    throw
+                }
+                $Script:MgGraphAuthenticated = $null
+                $ErrorMessage = $_.Exception.Message -replace "`n", " " -replace "`r", " "
+                Write-Warning -Message "Connect-Graphimo - Error: $ErrorMessage"
+                return $false
+            }
         }
     }
 
