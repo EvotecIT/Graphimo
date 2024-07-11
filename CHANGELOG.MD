@@ -1,5 +1,5 @@
 ﻿### 0.2.1 - 2024.07.11
- Improve `Connect-MgGraph` support
+- Improve `Connect-MgGraph` support
 
 ### 0.2.0 - 2024.07.05
 - Added support for `Connect-MgGraph` by using `-MgGraph` directly in the cmdlet or `Connect-Graphimo -MgGraphConfiguration @{}`
