@@ -4,7 +4,7 @@ Invoke-ModuleBuild -ModuleName 'Graphimo' {
     # Usual defaults as per standard module
     $Manifest = @{
         # Version number of this module.
-        ModuleVersion        = '0.2.0'
+        ModuleVersion        = '0.2.X'
         # Supported PSEditions
         CompatiblePSEditions = @('Desktop', 'Core')
         # ID used to uniquely identify this module
