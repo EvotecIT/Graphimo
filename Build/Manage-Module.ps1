@@ -35,7 +35,7 @@ Invoke-ModuleBuild -ModuleName 'Graphimo' {
 
     New-ConfigurationModuleSkip -IgnoreModuleName @(
         'MSAL.PS', 'Microsoft.Graph.Authentication'
-    ) -IgnoreFunctionName 'Connect-MgGraph', 'Invoke-MgGraphRequest'
+    ) -IgnoreFunctionName 'Connect-MgGraph', 'Invoke-MgGraphRequest', 'Get-MsalToken'
     $ConfigurationFormat = [ordered] @{
         RemoveComments                              = $true
         RemoveEmptyLines                            = $true
