@@ -2,7 +2,7 @@
 
 Import-Module "PSPublishModule" -Force
 
-Invoke-ModuleBuild -ModuleName 'Graphimo' {
+Build-Module -ModuleName 'Graphimo' {
     # Usual defaults as per standard module
     $Manifest = @{
         # Version number of this module.
@@ -85,6 +85,6 @@ Invoke-ModuleBuild -ModuleName 'Graphimo' {
     New-ConfigurationArtefact -Type Packed -Enable -Path "$PSScriptRoot\..\Artefacts\Packed" -ArtefactName '<ModuleName>.v<ModuleVersion>.zip' -AddRequiredModules
 
     # options for publishing to github/psgallery
-    #New-ConfigurationPublish -Type PowerShellGallery -FilePath 'C:\Support\Important\PowerShellGalleryAPI.txt' -Enabled:$true -GenerateReleaseNotes
+    #New-ConfigurationPublish -Type PowerShellGallery -FilePath 'C:\Support\Important\PowerShellGalleryAPI.txt' -Enabled:$true -GenerateReleaseNotes #-UseAsDependencyVersionSource
     #New-ConfigurationPublish -Type GitHub -FilePath 'C:\Support\Important\GitHubAPI.txt' -UserName 'EvotecIT' -Enabled:$true
 } -ExitCode
