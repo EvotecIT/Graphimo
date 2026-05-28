@@ -1,6 +1,6 @@
 ﻿Clear-Host
 
-Import-Module "PSPublishModule" -Force -RequiredVersion '2.0.27'
+Import-Module "PSPublishModule" -Force
 
 Invoke-ModuleBuild -ModuleName 'Graphimo' {
     # Usual defaults as per standard module
@@ -30,10 +30,6 @@ Invoke-ModuleBuild -ModuleName 'Graphimo' {
 
     New-ConfigurationModule -Type RequiredModule -Name 'PSSharedGoods' -Guid Auto -Version Latest
     New-ConfigurationModule -Type ApprovedModule -Name 'PSSharedGoods', 'PSWriteColor', 'Connectimo', 'PSUnifi', 'PSWebToolbox', 'PSMyPassword', 'ADEssentials'
-    New-ConfigurationModule -Type ExternalModule -Name @(
-        'Microsoft.PowerShell.Utility'
-        'Microsoft.PowerShell.Security'
-    )
 
     New-ConfigurationModuleSkip -IgnoreModuleName @(
         'MSAL.PS', 'Microsoft.Graph.Authentication'
@@ -79,13 +75,11 @@ Invoke-ModuleBuild -ModuleName 'Graphimo' {
     # when creating PSD1 use special style without comments and with only required parameters
     New-ConfigurationFormat -ApplyTo 'DefaultPSD1', 'OnMergePSD1' -PSD1Style 'Minimal'
     # configuration for documentation, at the same time it enables documentation processing
-    New-ConfigurationDocumentation -Enable:$false -StartClean -UpdateWhenNew -PathReadme 'Docs\Readme.md' -Path 'Docs'
+    New-ConfigurationDocumentation -Enable:$false -PathReadme 'Docs\Readme.md' -Path 'Docs'
 
     New-ConfigurationImportModule -ImportSelf
 
     New-ConfigurationBuild -Enable:$true -SignModule -MergeModuleOnBuild -MergeFunctionsFromApprovedModules -CertificateThumbprint '483292C9E317AA13B07BB7A96AE9D1A5ED9E7703'
-
-    # New-ConfigurationTest -TestsPath "$PSScriptRoot\..\Tests" -Enable
 
     New-ConfigurationArtefact -Type Unpacked -Enable -Path "$PSScriptRoot\..\Artefacts\Unpacked" -AddRequiredModules
     New-ConfigurationArtefact -Type Packed -Enable -Path "$PSScriptRoot\..\Artefacts\Packed" -ArtefactName '<ModuleName>.v<ModuleVersion>.zip' -AddRequiredModules
