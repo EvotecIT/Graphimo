@@ -1,4 +1,5 @@
 ## Unreleased
+- Improve Invoke-Graphimo REST error logging for non-JSON responses so parsing failures include request context and a response preview
 - Add DebugRequest switch to Get-GraphUser to log request details (select/filter/baseUri)
 
 ## Unreleased

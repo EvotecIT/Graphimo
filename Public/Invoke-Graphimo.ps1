@@ -119,17 +119,7 @@
             }
         }
     } catch {
-        $RestError = $_.ErrorDetails.Message
-        if ($RestError) {
-            try {
-                $ErrorMessage = ConvertFrom-Json -InputObject $RestError
-                Write-Warning -Message "Invoke-Graphimo - Error: $($_.Exception.Message) $($ErrorMessage.error.message)"
-            } catch {
-                Write-Warning -Message "Invoke-Graphimo - Error: $($_.Exception.Message)"
-            }
-        } else {
-            Write-Warning -Message "Invoke-Graphimo - Error: $($_.Exception.Message)"
-        }
+        Write-Warning -Message (Format-GraphimoRestError -ErrorRecord $_ -RestSplat $RestSplat)
         if ($Method -notin 'GET', 'POST') {
             return $false
         }
