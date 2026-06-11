@@ -184,16 +184,16 @@
         $Body['userType'] = $UserType
     }
     if ($ID) {
-        $URI = "/users/$ID"
+        $UserIdentifier = [System.Uri]::EscapeDataString($ID)
     } else {
-        $URI = "/users/$SearchUserPrincipalName"
+        $UserIdentifier = [System.Uri]::EscapeDataString($SearchUserPrincipalName)
     }
+    $URI = "/users/$UserIdentifier"
     if ($Body['onPremisesExtensionAttributes'].Count -eq 0) {
         $Body.Remove('onPremisesExtensionAttributes')
     }
     if ($Body.Count -gt 0) {
-        $UriEncoded = [System.Web.HttpUtility]::UrlEncode($Uri)
-        Invoke-Graphimo -Uri $UriEncoded -Method PATCH -Headers $Headers -Body $Body -BaseUri $BaseUri -MgGraph:$MgGraph.IsPresent
+        Invoke-Graphimo -Uri $URI -Method PATCH -Headers $Headers -Body $Body -BaseUri $BaseUri -MgGraph:$MgGraph.IsPresent
     } else {
         Write-Warning -Message "Set-GraphUser - No changes were made to the user, as no field to change."
     }
