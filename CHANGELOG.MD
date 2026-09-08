@@ -1,11 +1,10 @@
-## Unreleased
+### 0.2.4 - 2026.09.08
 - Fix Set-GraphUser PATCH routes by encoding only the user identifier instead of the whole /users/{id} path
 - Improve Invoke-Graphimo REST error logging for non-JSON responses so parsing failures include request context and a response preview
 - Add DebugRequest switch to Get-GraphUser to log request details (select/filter/baseUri)
-
-## Unreleased
 - Use Graph beta when requesting onPremisesExtensionAttributes (needed for some guest/extensionAttribute reads)
 - Handle onPremisesExtensionAttributes returned as dictionaries from Invoke-MgGraphRequest to keep extensionAttribute* values populated
+- Use the current Evotec Services code-signing certificate for module releases
 
 ### 0.2.1 - 2024.07.11
 - Improve `Connect-MgGraph` support
