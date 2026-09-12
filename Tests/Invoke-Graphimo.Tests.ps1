@@ -13,6 +13,9 @@ BeforeAll {
     function Connect-Graphimo {
         param([string] $TenantId)
     }
+    function Connect-MsalToken {
+        param([System.Collections.IDictionary] $Authorization)
+    }
 
     . (Join-Path $PSScriptRoot '..\Public\Invoke-Graphimo.ps1')
 }
@@ -37,6 +40,32 @@ Describe 'Invoke-Graphimo error compatibility' {
         $authorization = @{ Splat = @{ TenantId = 'test-tenant' } }
 
         { Invoke-Graphimo -Uri '/invitations' -Method POST -Headers $authorization -Confirm:$false -ThrowOnError } | Should -Throw '*Authorization error*'
+
+        Should -Invoke Invoke-RestMethod -Times 0 -Exactly
+    }
+
+    It 'throws when an MSAL refresh returns no authorization' {
+        Mock Connect-MsalToken { $null }
+        $authorization = @{
+            MsalToken = [pscustomobject] @{ AccessToken = 'expired' }
+            Splat     = @{ TenantId = 'test-tenant' }
+        }
+
+        { Invoke-Graphimo -Uri '/invitations' -Method POST -Headers $authorization -Confirm:$false -ThrowOnError } | Should -Throw '*Authorization error*'
+
+        Should -Invoke Invoke-RestMethod -Times 0 -Exactly
+    }
+
+    It 'classifies a thrown MSAL refresh failure as a pre-dispatch authorization failure' {
+        Mock Connect-MsalToken { throw 'refresh failed' }
+        $authorization = @{
+            MsalToken = [pscustomobject] @{ AccessToken = 'expired' }
+            Splat     = @{ TenantId = 'test-tenant' }
+        }
+
+        {
+            Invoke-Graphimo -Uri '/invitations' -Method POST -Headers $authorization -Confirm:$false -ThrowOnError
+        } | Should -Throw -ExceptionType ([System.UnauthorizedAccessException])
 
         Should -Invoke Invoke-RestMethod -Times 0 -Exactly
     }

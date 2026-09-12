@@ -29,6 +29,14 @@ BeforeAll {
             Context      = [pscustomobject] @{ EmployeeId = "employee-$Index" }
         }
     }
+
+    function New-TestPreDispatchAuthorizationException {
+        param([string] $Message = 'Authorization refresh failed.')
+
+        $exception = [System.UnauthorizedAccessException]::new($Message)
+        $exception.Data['GraphimoFailurePhase'] = 'AuthorizationPreDispatch'
+        $exception
+    }
 }
 
 Describe 'Import-GraphGuestBatch' {
@@ -399,6 +407,131 @@ Describe 'Import-GraphGuestBatch' {
         $result.ErrorMessage | Should -BeLike '*reconciled before retrying*'
         Should -Invoke Invoke-Graphimo -Times 1 -Exactly
         Should -Invoke Start-Sleep -Times 0 -Exactly
+    }
+
+    It 'reports a pre-dispatch authorization failure as definite and retryable after credentials are refreshed' {
+        Mock Invoke-Graphimo { throw (New-TestPreDispatchAuthorizationException) }
+
+        $result = Import-GraphGuestBatch -Invitation @((New-TestInvitation -Index 1)) -MgGraph
+
+        $result.Success | Should -BeFalse
+        $result.Status | Should -Be 'Failed'
+        $result.ErrorCode | Should -Be 'AuthorizationFailed'
+        $result.AttemptCount | Should -Be 0
+        Should -Invoke Invoke-Graphimo -Times 1 -Exactly
+    }
+
+    It 'keeps an unmarked transport authorization exception uncertain' {
+        Mock Invoke-Graphimo { throw [System.UnauthorizedAccessException]::new('Transport rejected access after send.') }
+
+        $result = Import-GraphGuestBatch -Invitation @((New-TestInvitation -Index 1)) -MgGraph
+
+        $result.Status | Should -Be 'Uncertain'
+        $result.ErrorCode | Should -Be 'BatchTransportUncertain'
+        $result.AttemptCount | Should -Be 1
+    }
+
+    It 'emits and checkpoints one definite failure per valid input when authentication is missing' {
+        $script:CheckpointBatches = [System.Collections.Generic.List[object]]::new()
+        $checkpointAction = {
+            param([object[]] $CompletedBatch)
+            $script:CheckpointBatches.Add(@($CompletedBatch))
+        }
+
+        $result = @(Import-GraphGuestBatch -Invitation @(
+                (New-TestInvitation -Index 1),
+                (New-TestInvitation -Index 2)
+            ) -ResultBatchAction $checkpointAction -WarningAction SilentlyContinue)
+
+        $result.Count | Should -Be 2
+        @($result | Where-Object ErrorCode -eq 'AuthorizationFailed').Count | Should -Be 2
+        @($result | Select-Object -ExpandProperty AttemptCount -Unique) | Should -Be 0
+        $script:CheckpointBatches.Count | Should -Be 1
+        $script:CheckpointBatches[0].Count | Should -Be 2
+        Should -Invoke Invoke-Graphimo -Times 0 -Exactly
+    }
+
+    It 'preserves completed dispatch accounting when authorization refresh fails before a retry' {
+        $script:authRetryAttempt = 0
+        Mock Invoke-Graphimo {
+            $script:authRetryAttempt++
+            if ($script:authRetryAttempt -eq 1) {
+                return [pscustomobject] @{
+                    responses = @([pscustomobject] @{
+                            id      = $Body.requests[0].id
+                            status  = 429
+                            headers = @{ 'Retry-After' = '0' }
+                            body    = [pscustomobject] @{ error = [pscustomobject] @{ code = 'TooManyRequests' } }
+                        })
+                }
+            }
+            throw (New-TestPreDispatchAuthorizationException)
+        }
+
+        $result = Import-GraphGuestBatch -Invitation @((New-TestInvitation -Index 1)) -MgGraph -MaxRetries 1
+
+        $result.Status | Should -Be 'Failed'
+        $result.ErrorCode | Should -Be 'AuthorizationFailed'
+        $result.AttemptCount | Should -Be 1
+        $result.RetryCount | Should -Be 0
+        Should -Invoke Invoke-Graphimo -Times 2 -Exactly
+    }
+
+    It 'reads successful subresponse status values from dictionaries returned by the Graph SDK' {
+        Mock Invoke-Graphimo {
+            [ordered] @{
+                responses = @(
+                    [ordered] @{
+                        id      = $Body.requests[0].id
+                        status  = 201
+                        headers = [ordered] @{}
+                        body    = [ordered] @{
+                            invitedUser = [ordered] @{ id = 'created-from-dictionary' }
+                        }
+                    }
+                )
+            }
+        }
+
+        $result = Import-GraphGuestBatch -Invitation @((New-TestInvitation -Index 1)) -MgGraph
+
+        $result.Success | Should -BeTrue
+        $result.Status | Should -Be 'Succeeded'
+        $result.InvitedUser.invitedUser.id | Should -Be 'created-from-dictionary'
+    }
+
+    It 'retries throttled dictionary subresponses returned by the Graph SDK' {
+        $script:dictionaryAttempt = 0
+        Mock Invoke-Graphimo {
+            $script:dictionaryAttempt++
+            $requestId = $Body.requests[0].id
+            if ($script:dictionaryAttempt -eq 1) {
+                return [ordered] @{
+                    responses = @([ordered] @{
+                            id      = $requestId
+                            status  = 429
+                            headers = [ordered] @{ 'Retry-After' = '0' }
+                            body    = [ordered] @{ error = [ordered] @{ code = 'TooManyRequests'; message = 'Slow down.' } }
+                        })
+                }
+            }
+
+            [ordered] @{
+                responses = @([ordered] @{
+                        id      = $requestId
+                        status  = 201
+                        headers = [ordered] @{}
+                        body    = [ordered] @{ invitedUser = [ordered] @{ id = 'created-after-throttle' } }
+                    })
+            }
+        }
+
+        $result = Import-GraphGuestBatch -Invitation @((New-TestInvitation -Index 1)) -MgGraph -MaxRetries 1
+
+        $result.Success | Should -BeTrue
+        $result.AttemptCount | Should -Be 2
+        $result.RetryCount | Should -Be 1
+        Should -Invoke Invoke-Graphimo -Times 2 -Exactly
     }
 
     It 'returns a local validation failure without sending a batch for a missing email address' {

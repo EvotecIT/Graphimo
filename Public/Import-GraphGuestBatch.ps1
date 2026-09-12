@@ -45,11 +45,6 @@ function Import-GraphGuestBatch {
         [switch] $MgGraph
     )
 
-    if (-not $MgGraph -and -not $Headers -and $Script:MgGraphAuthenticated -ne $true) {
-        Write-Warning -Message 'No headers or MgGraph switch provided. Skipping.'
-        return
-    }
-
     $CallingCmdlet = $PSCmdlet
     for ($Offset = 0; $Offset -lt $Invitation.Count; $Offset += $BatchSize) {
         $BatchResults = @(& {
@@ -159,6 +154,31 @@ function Import-GraphGuestBatch {
             return
         }
 
+        if (-not $MgGraph -and -not $Headers -and $Script:MgGraphAuthenticated -ne $true) {
+            Write-Warning -Message 'No headers or MgGraph switch provided. Skipping.'
+            foreach ($State in $Pending) {
+                [pscustomobject] @{
+                    InputIndex        = $State.InputIndex
+                    Context           = $State.Context
+                    EmailAddress      = $State.EmailAddress
+                    Status            = 'Failed'
+                    Success           = $false
+                    StatusCode        = 0
+                    AttemptCount      = 0
+                    RetryCount        = 0
+                    RetryDelaySeconds = 0
+                    ThrottleDelaySeconds = 0
+                    BatchRetryDelaySeconds = 0
+                    BatchThrottleDelaySeconds = 0
+                    OperationType     = $State.OperationType
+                    InvitedUser       = $null
+                    ErrorCode         = 'AuthorizationFailed'
+                    ErrorMessage      = 'No headers or MgGraph authentication context was provided.'
+                }
+            }
+            return
+        }
+
         if ($PendingBatchAction) {
             $null = & $PendingBatchAction ([object[]] @($Pending | Sort-Object InputIndex))
         }
@@ -184,24 +204,34 @@ function Import-GraphGuestBatch {
             try {
                 $BatchResponse = Invoke-Graphimo -Uri '/$batch' -Method POST -Headers $Headers -Body ([ordered] @{ requests = $Requests.ToArray() }) -MgGraph:$MgGraph.IsPresent -WhatIf:$false -Confirm:$false -ThrowOnError -ErrorAction Stop
             } catch {
+                $IsPreDispatchAuthorizationFailure = $_.Exception.Data['GraphimoFailurePhase'] -eq 'AuthorizationPreDispatch'
                 foreach ($State in $Pending) {
+                    $CompletedAttemptCount = if ($IsPreDispatchAuthorizationFailure) {
+                        [math]::Max(0, $State.AttemptCount - 1)
+                    } else {
+                        $State.AttemptCount
+                    }
                     [pscustomobject] @{
                         InputIndex        = $State.InputIndex
                         Context           = $State.Context
                         EmailAddress      = $State.EmailAddress
-                        Status            = 'Uncertain'
+                        Status            = if ($IsPreDispatchAuthorizationFailure) { 'Failed' } else { 'Uncertain' }
                         Success           = $false
                         StatusCode        = 0
-                        AttemptCount      = $State.AttemptCount
-                        RetryCount        = $State.AttemptCount - 1
+                        AttemptCount      = $CompletedAttemptCount
+                        RetryCount        = [math]::Max(0, $CompletedAttemptCount - 1)
                         RetryDelaySeconds = $State.RetryDelaySeconds
                         ThrottleDelaySeconds = $State.ThrottleDelaySeconds
                         BatchRetryDelaySeconds = $State.BatchRetryDelaySeconds
                         BatchThrottleDelaySeconds = $State.BatchThrottleDelaySeconds
                         OperationType     = $State.OperationType
                         InvitedUser       = $null
-                        ErrorCode         = 'BatchTransportUncertain'
-                        ErrorMessage      = "Microsoft Graph invitation batch did not return a usable response. The invitation outcome is uncertain and must be reconciled before retrying. $($_.Exception.Message)"
+                        ErrorCode         = if ($IsPreDispatchAuthorizationFailure) { 'AuthorizationFailed' } else { 'BatchTransportUncertain' }
+                        ErrorMessage      = if ($IsPreDispatchAuthorizationFailure) {
+                            $_.Exception.Message
+                        } else {
+                            "Microsoft Graph invitation batch did not return a usable response. The invitation outcome is uncertain and must be reconciled before retrying. $($_.Exception.Message)"
+                        }
                     }
                 }
                 break
@@ -218,8 +248,15 @@ function Import-GraphGuestBatch {
                 $Response = $ResponseByRequestId[$RequestId]
                 $StatusCode = 0
                 $HasUsableStatus = $false
-                if ($null -ne $Response -and $null -ne $Response.PSObject.Properties['status']) {
-                    $HasUsableStatus = [int]::TryParse([string] $Response.status, [ref] $StatusCode) -and $StatusCode -ge 100 -and $StatusCode -le 599
+                if ($null -ne $Response) {
+                    $StatusValue = if ($Response -is [System.Collections.IDictionary]) {
+                        $Response['status']
+                    } else {
+                        $Response.status
+                    }
+                    $HasUsableStatus = $null -ne $StatusValue -and
+                        [int]::TryParse([string] $StatusValue, [ref] $StatusCode) -and
+                        $StatusCode -ge 100 -and $StatusCode -le 599
                 }
                 $InvitedUserId = if ($null -eq $Response) { $null } else { [string] $Response.body.invitedUser.id }
                 if ($StatusCode -eq 201 -and -not [string]::IsNullOrWhiteSpace($InvitedUserId)) {
