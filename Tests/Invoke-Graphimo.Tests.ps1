@@ -69,4 +69,20 @@ Describe 'Invoke-Graphimo error compatibility' {
 
         Should -Invoke Invoke-RestMethod -Times 0 -Exactly
     }
+
+    It 'classifies a missing Microsoft Graph SDK command as a pre-dispatch failure' {
+        Mock Get-Command { $null } -ParameterFilter { $Name -eq 'Invoke-MgGraphRequest' }
+        $caught = $null
+
+        try {
+            Invoke-Graphimo -Uri '/invitations' -Method POST -MgGraph -Confirm:$false -ThrowOnError
+        } catch {
+            $caught = $_.Exception
+        }
+
+        $caught | Should -Not -BeNullOrEmpty
+        $caught.GetType().FullName | Should -Be 'System.Management.Automation.CommandNotFoundException'
+        $caught.Data['GraphimoFailurePhase'] | Should -Be 'GraphSdkUnavailable'
+        Should -Invoke Invoke-RestMethod -Times 0 -Exactly
+    }
 }

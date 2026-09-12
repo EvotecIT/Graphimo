@@ -46,6 +46,7 @@ function Import-GraphGuestBatch {
     )
 
     $CallingCmdlet = $PSCmdlet
+    $InvocationIsWhatIf = [bool] $WhatIfPreference
     for ($Offset = 0; $Offset -lt $Invitation.Count; $Offset += $BatchSize) {
         $BatchResults = @(& {
         $LastIndex = [math]::Min($Offset + $BatchSize - 1, $Invitation.Count - 1)
@@ -204,9 +205,10 @@ function Import-GraphGuestBatch {
             try {
                 $BatchResponse = Invoke-Graphimo -Uri '/$batch' -Method POST -Headers $Headers -Body ([ordered] @{ requests = $Requests.ToArray() }) -MgGraph:$MgGraph.IsPresent -WhatIf:$false -Confirm:$false -ThrowOnError -ErrorAction Stop
             } catch {
-                $IsPreDispatchAuthorizationFailure = $_.Exception.Data['GraphimoFailurePhase'] -eq 'AuthorizationPreDispatch'
+                $FailurePhase = [string] $_.Exception.Data['GraphimoFailurePhase']
+                $IsPreDispatchFailure = $FailurePhase -in 'AuthorizationPreDispatch', 'GraphSdkUnavailable'
                 foreach ($State in $Pending) {
-                    $CompletedAttemptCount = if ($IsPreDispatchAuthorizationFailure) {
+                    $CompletedAttemptCount = if ($IsPreDispatchFailure) {
                         [math]::Max(0, $State.AttemptCount - 1)
                     } else {
                         $State.AttemptCount
@@ -215,7 +217,7 @@ function Import-GraphGuestBatch {
                         InputIndex        = $State.InputIndex
                         Context           = $State.Context
                         EmailAddress      = $State.EmailAddress
-                        Status            = if ($IsPreDispatchAuthorizationFailure) { 'Failed' } else { 'Uncertain' }
+                        Status            = if ($IsPreDispatchFailure) { 'Failed' } else { 'Uncertain' }
                         Success           = $false
                         StatusCode        = 0
                         AttemptCount      = $CompletedAttemptCount
@@ -226,8 +228,14 @@ function Import-GraphGuestBatch {
                         BatchThrottleDelaySeconds = $State.BatchThrottleDelaySeconds
                         OperationType     = $State.OperationType
                         InvitedUser       = $null
-                        ErrorCode         = if ($IsPreDispatchAuthorizationFailure) { 'AuthorizationFailed' } else { 'BatchTransportUncertain' }
-                        ErrorMessage      = if ($IsPreDispatchAuthorizationFailure) {
+                        ErrorCode         = if ($FailurePhase -eq 'AuthorizationPreDispatch') {
+                            'AuthorizationFailed'
+                        } elseif ($FailurePhase -eq 'GraphSdkUnavailable') {
+                            'GraphSdkUnavailable'
+                        } else {
+                            'BatchTransportUncertain'
+                        }
+                        ErrorMessage      = if ($IsPreDispatchFailure) {
                             $_.Exception.Message
                         } else {
                             "Microsoft Graph invitation batch did not return a usable response. The invitation outcome is uncertain and must be reconciled before retrying. $($_.Exception.Message)"
@@ -409,7 +417,7 @@ function Import-GraphGuestBatch {
         }
         })
         $OrderedBatchResults = @($BatchResults | Sort-Object InputIndex)
-        $BatchWasSimulated = @($OrderedBatchResults | Where-Object Status -eq 'WhatIf').Count -gt 0
+        $BatchWasSimulated = $InvocationIsWhatIf -or @($OrderedBatchResults | Where-Object Status -eq 'WhatIf').Count -gt 0
         if ($ResultBatchAction -and -not $BatchWasSimulated -and $OrderedBatchResults.Count -gt 0) {
             $null = & $ResultBatchAction ([object[]] $OrderedBatchResults)
         }

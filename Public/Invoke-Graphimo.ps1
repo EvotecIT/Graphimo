@@ -59,6 +59,16 @@
     }
 
     $UsesMgGraph = $MgGraph -or $Script:MgGraphAuthenticated -eq $true
+    if ($UsesMgGraph -and -not (Get-Command -Name 'Invoke-MgGraphRequest' -ErrorAction SilentlyContinue)) {
+        $Message = 'Invoke-Graphimo - Microsoft Graph PowerShell SDK command Invoke-MgGraphRequest is unavailable. Skipping.'
+        if ($ThrowOnError) {
+            $Exception = [System.Management.Automation.CommandNotFoundException]::new($Message)
+            $Exception.Data['GraphimoFailurePhase'] = 'GraphSdkUnavailable'
+            throw $Exception
+        }
+        Write-Warning $Message
+        return
+    }
     if (-not $UsesMgGraph -and (-not $Headers -or $Headers.Error)) {
         $Message = 'Invoke-Graphimo - Authorization error. Skipping.'
         if ($ThrowOnError) {

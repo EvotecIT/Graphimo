@@ -37,6 +37,12 @@ BeforeAll {
         $exception.Data['GraphimoFailurePhase'] = 'AuthorizationPreDispatch'
         $exception
     }
+
+    function New-TestGraphSdkUnavailableException {
+        $exception = [System.Management.Automation.CommandNotFoundException]::new('Invoke-MgGraphRequest is unavailable.')
+        $exception.Data['GraphimoFailurePhase'] = 'GraphSdkUnavailable'
+        $exception
+    }
 }
 
 Describe 'Import-GraphGuestBatch' {
@@ -558,6 +564,30 @@ Describe 'Import-GraphGuestBatch' {
         $result.Count | Should -Be 2
         $script:ResultCallbackCount | Should -Be 0
         Should -Invoke Invoke-Graphimo -Times 0 -Exactly
+    }
+
+    It 'does not run result callbacks when every WhatIf input fails local validation' {
+        $script:ResultCallbackCount = 0
+        $resultAction = { $script:ResultCallbackCount++ }
+
+        $result = @(Import-GraphGuestBatch -Invitation @((New-TestInvitation -Index 1 -EmailAddress '')) -MgGraph -WhatIf -ResultBatchAction $resultAction)
+
+        $result.Count | Should -Be 1
+        $result[0].ErrorCode | Should -Be 'InvalidInvitation'
+        $script:ResultCallbackCount | Should -Be 0
+        Should -Invoke Invoke-Graphimo -Times 0 -Exactly
+    }
+
+    It 'reports a missing Microsoft Graph SDK as a failed pre-dispatch attempt' {
+        Mock Invoke-Graphimo { throw (New-TestGraphSdkUnavailableException) }
+
+        $result = Import-GraphGuestBatch -Invitation @((New-TestInvitation -Index 1)) -MgGraph
+
+        $result.Status | Should -Be 'Failed'
+        $result.ErrorCode | Should -Be 'GraphSdkUnavailable'
+        $result.AttemptCount | Should -Be 0
+        $result.RetryCount | Should -Be 0
+        Should -Invoke Invoke-Graphimo -Times 1 -Exactly
     }
 }
 
