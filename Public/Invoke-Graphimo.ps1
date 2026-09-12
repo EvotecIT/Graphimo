@@ -24,7 +24,11 @@
         }
     } else {
         if (-not $Headers) {
-            Write-Warning "No headers provided. Skipping."
+            $Message = 'Invoke-Graphimo - No headers provided. Skipping.'
+            if ($ThrowOnError) {
+                throw [System.InvalidOperationException]::new($Message)
+            }
+            Write-Warning $Message
             return
         }
         # This forces a reconnect of session in case it's about to time out. If it's not timeouting a cache value is used
@@ -35,7 +39,11 @@
     }
 
     if ($Headers.Error) {
-        Write-Warning "Invoke-Graphimo - Authorization error. Skipping."
+        $Message = 'Invoke-Graphimo - Authorization error. Skipping.'
+        if ($ThrowOnError) {
+            throw [System.InvalidOperationException]::new($Message)
+        }
+        Write-Warning $Message
         return
     }
     if ($Headers.MsalToken) {

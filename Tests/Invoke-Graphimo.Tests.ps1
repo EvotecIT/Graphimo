@@ -10,6 +10,9 @@ BeforeAll {
         param($ErrorRecord, $RestSplat)
         'formatted Graph error'
     }
+    function Connect-Graphimo {
+        param([string] $TenantId)
+    }
 
     . (Join-Path $PSScriptRoot '..\Public\Invoke-Graphimo.ps1')
 }
@@ -27,5 +30,14 @@ Describe 'Invoke-Graphimo error compatibility' {
 
     It 'rethrows transport failures when explicitly requested' {
         { Invoke-Graphimo -Uri '/invitations' -Method POST -Headers @{ Authorization = 'Bearer test' } -Confirm:$false -ThrowOnError } | Should -Throw '*transport failed after send*'
+    }
+
+    It 'throws when refreshed authorization fails and fail-on-error is requested' {
+        Mock Connect-Graphimo { [ordered] @{ Error = $true } }
+        $authorization = @{ Splat = @{ TenantId = 'test-tenant' } }
+
+        { Invoke-Graphimo -Uri '/invitations' -Method POST -Headers $authorization -Confirm:$false -ThrowOnError } | Should -Throw '*Authorization error*'
+
+        Should -Invoke Invoke-RestMethod -Times 0 -Exactly
     }
 }
