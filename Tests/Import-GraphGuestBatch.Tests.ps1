@@ -1,4 +1,5 @@
 BeforeAll {
+    . (Join-Path $PSScriptRoot '..\Private\ConvertTo-GraphimoBoolean.ps1')
     . (Join-Path $PSScriptRoot '..\Private\Get-GraphimoRetryAfterSeconds.ps1')
     . (Join-Path $PSScriptRoot '..\Private\New-GraphGuestInvitationBody.ps1')
     . (Join-Path $PSScriptRoot '..\Public\Import-GraphGuest.ps1')
@@ -11,7 +12,8 @@ BeforeAll {
             [string] $Method,
             [System.Collections.IDictionary] $Headers,
             [System.Collections.IDictionary] $Body,
-            [switch] $MgGraph
+            [switch] $MgGraph,
+            [switch] $ThrowOnError
         )
     }
 
@@ -64,7 +66,8 @@ Describe 'Import-GraphGuestBatch' {
         $script:BatchBodies[0].requests.Count | Should -Be 20
         $script:BatchBodies[1].requests.Count | Should -Be 5
         Should -Invoke Invoke-Graphimo -Times 2 -Exactly -ParameterFilter {
-            $Uri -eq '/$batch' -and $Method -eq 'POST' -and $MgGraph
+            $Uri -eq '/$batch' -and $Method -eq 'POST' -and $MgGraph -and
+            $ThrowOnError -and $Confirm -eq $false
         }
     }
 
@@ -114,6 +117,28 @@ Describe 'Import-GraphGuestBatch' {
         $body.invitedUserType | Should -Be 'Member'
     }
 
+    It 'parses CSV-style false boolean overrides without enabling invitation email or redemption reset' {
+        $invitation = New-TestInvitation -Index 1
+        $invitation | Add-Member -NotePropertyName SendInvitationMessage -NotePropertyValue 'False'
+        $invitation | Add-Member -NotePropertyName ResetRedemption -NotePropertyValue 'False'
+
+        $null = Import-GraphGuestBatch -Invitation @($invitation) -MgGraph -SendInvitationMessage $true
+
+        $body = $script:BatchBodies[0].requests[0].body
+        $body.sendInvitationMessage | Should -BeFalse
+        $body.resetRedemption | Should -BeFalse
+    }
+
+    It 'keeps callback success output out of the invitation result stream' {
+        $pendingAction = { 'pending callback output' }
+        $resultAction = { 'result callback output' }
+
+        $result = @(Import-GraphGuestBatch -Invitation @((New-TestInvitation -Index 1)) -MgGraph -PendingBatchAction $pendingAction -ResultBatchAction $resultAction)
+
+        $result.Count | Should -Be 1
+        $result[0].Status | Should -Be 'Succeeded'
+    }
+
     It 'retries throttled subrequests once after the Retry-After delay' {
         $script:CallCount = 0
         Mock Invoke-Graphimo {
@@ -148,6 +173,41 @@ Describe 'Import-GraphGuestBatch' {
         $result.RetryDelaySeconds | Should -Be 3
         $result.ThrottleDelaySeconds | Should -Be 3
         Should -Invoke Start-Sleep -Times 1 -Exactly -ParameterFilter { $Seconds -eq 3 }
+    }
+
+    It 'retries a service-unavailable subrequest using Retry-After' {
+        $script:CallCount = 0
+        Mock Invoke-Graphimo {
+            $script:CallCount++
+            $Request = $Body.requests[0]
+            if ($script:CallCount -eq 1) {
+                [pscustomobject] @{
+                    responses = @([pscustomobject] @{
+                            id      = $Request.id
+                            status  = 503
+                            headers = @{ 'Retry-After' = '4' }
+                            body    = [pscustomobject] @{ error = [pscustomobject] @{ code = 'ServiceUnavailable'; message = 'Retry later.' } }
+                        })
+                }
+            } else {
+                [pscustomobject] @{
+                    responses = @([pscustomobject] @{
+                            id      = $Request.id
+                            status  = 201
+                            headers = @{}
+                            body    = [pscustomobject] @{ invitedUser = [pscustomobject] @{ id = 'created-1' } }
+                        })
+                }
+            }
+        }
+
+        $result = Import-GraphGuestBatch -Invitation @((New-TestInvitation -Index 1)) -MgGraph
+
+        $result.Success | Should -BeTrue
+        $result.AttemptCount | Should -Be 2
+        $result.RetryDelaySeconds | Should -Be 4
+        $result.ThrottleDelaySeconds | Should -Be 0
+        Should -Invoke Start-Sleep -Times 1 -Exactly -ParameterFilter { $Seconds -eq 4 }
     }
 
     It 'builds reset-redemption requests with the existing invited user id' {
@@ -285,6 +345,27 @@ Describe 'Import-GraphGuestBatch' {
         Should -Invoke Start-Sleep -Times 0 -Exactly
     }
 
+    It 'marks ambiguous gateway subresponses uncertain without retrying' {
+        Mock Invoke-Graphimo {
+            $Request = $Body.requests[0]
+            [pscustomobject] @{
+                responses = @([pscustomobject] @{
+                        id = $Request.id
+                        status = 502
+                        headers = @{}
+                        body = [pscustomobject] @{ error = [pscustomobject] @{ code = 'BadGateway'; message = 'Gateway response was lost.' } }
+                    })
+            }
+        }
+
+        $result = Import-GraphGuestBatch -Invitation @((New-TestInvitation -Index 1)) -MgGraph -MaxRetries 2
+
+        $result.Status | Should -Be 'Uncertain'
+        $result.ErrorCode | Should -Be 'AmbiguousInvitationResponse'
+        Should -Invoke Invoke-Graphimo -Times 1 -Exactly
+        Should -Invoke Start-Sleep -Times 0 -Exactly
+    }
+
     It 'marks a malformed successful response uncertain instead of retryable failure' {
         Mock Invoke-Graphimo {
             $Request = $Body.requests[0]
@@ -332,6 +413,17 @@ Describe 'Import-GraphGuestBatch' {
         $result = Import-GraphGuestBatch -Invitation @((New-TestInvitation -Index 1)) -MgGraph -WhatIf
 
         $result.Status | Should -Be 'WhatIf'
+        Should -Invoke Invoke-Graphimo -Times 0 -Exactly
+    }
+
+    It 'does not run result callbacks for mixed validation and WhatIf rows' {
+        $script:ResultCallbackCount = 0
+        $resultAction = { $script:ResultCallbackCount++ }
+
+        $result = @(Import-GraphGuestBatch -Invitation @((New-TestInvitation -Index 1 -EmailAddress ''), (New-TestInvitation -Index 2)) -MgGraph -WhatIf -ResultBatchAction $resultAction)
+
+        $result.Count | Should -Be 2
+        $script:ResultCallbackCount | Should -Be 0
         Should -Invoke Invoke-Graphimo -Times 0 -Exactly
     }
 }

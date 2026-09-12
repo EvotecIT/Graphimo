@@ -12,7 +12,8 @@
         [string] $CountVariable,
         [int] $First,
         [string] $ConsistencyLevel,
-        [switch] $MgGraph
+        [switch] $MgGraph,
+        [switch] $ThrowOnError
     )
     if ($MgGraph -or $Script:MgGraphAuthenticated -eq $true) {
         # we use the Microsoft.Graph module instead of Invoke-RestMethod
@@ -119,6 +120,9 @@
             }
         }
     } catch {
+        if ($ThrowOnError) {
+            throw
+        }
         Write-Warning -Message (Format-GraphimoRestError -ErrorRecord $_ -RestSplat $RestSplat)
         if ($Method -notin 'GET', 'POST') {
             return $false

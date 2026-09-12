@@ -81,10 +81,29 @@ function Import-GraphGuestBatch {
                 continue
             }
 
-            $ItemSendInvitationMessage = if ($null -eq $Item.SendInvitationMessage) {
-                $SendInvitationMessage
-            } else {
-                [bool] $Item.SendInvitationMessage
+            try {
+                $ItemSendInvitationMessage = ConvertTo-GraphimoBoolean -Value $Item.SendInvitationMessage -DefaultValue $SendInvitationMessage -PropertyName 'SendInvitationMessage'
+                $ItemResetRedemption = ConvertTo-GraphimoBoolean -Value $Item.ResetRedemption -PropertyName 'ResetRedemption'
+            } catch {
+                [pscustomobject] @{
+                    InputIndex        = $Index
+                    Context           = $Item.Context
+                    EmailAddress      = $EmailAddress
+                    Status            = 'Failed'
+                    Success           = $false
+                    StatusCode        = 0
+                    AttemptCount      = 0
+                    RetryCount        = 0
+                    RetryDelaySeconds = 0
+                    ThrottleDelaySeconds = 0
+                    BatchRetryDelaySeconds = 0
+                    BatchThrottleDelaySeconds = 0
+                    OperationType     = [string] $Item.OperationType
+                    InvitedUser       = $null
+                    ErrorCode         = 'InvalidInvitation'
+                    ErrorMessage      = $_.Exception.Message
+                }
+                continue
             }
             $ItemInviteRedirectUrl = if ([string]::IsNullOrWhiteSpace([string] $Item.InviteRedirectUrl)) {
                 $InviteRedirectUrl
@@ -96,7 +115,7 @@ function Import-GraphGuestBatch {
             } else {
                 [string] $Item.UserType
             }
-            $Body = New-GraphGuestInvitationBody -Name ([string] $Item.DisplayName) -EmailAddress $EmailAddress -SendInvitationMessage $ItemSendInvitationMessage -InviteRedirectUrl $ItemInviteRedirectUrl -ResetRedemption ([bool] $Item.ResetRedemption) -InvitedUserID ([string] $Item.InvitedUserID) -UserType $ItemUserType
+            $Body = New-GraphGuestInvitationBody -Name ([string] $Item.DisplayName) -EmailAddress $EmailAddress -SendInvitationMessage $ItemSendInvitationMessage -InviteRedirectUrl $ItemInviteRedirectUrl -ResetRedemption $ItemResetRedemption -InvitedUserID ([string] $Item.InvitedUserID) -UserType $ItemUserType
             $Pending.Add([pscustomobject] @{
                     InputIndex        = $Index
                     Context           = $Item.Context
@@ -141,7 +160,7 @@ function Import-GraphGuestBatch {
         }
 
         if ($PendingBatchAction) {
-            & $PendingBatchAction ([object[]] @($Pending | Sort-Object InputIndex))
+            $null = & $PendingBatchAction ([object[]] @($Pending | Sort-Object InputIndex))
         }
 
         while ($Pending.Count -gt 0) {
@@ -163,7 +182,7 @@ function Import-GraphGuestBatch {
             }
 
             try {
-                $BatchResponse = Invoke-Graphimo -Uri '/$batch' -Method POST -Headers $Headers -Body ([ordered] @{ requests = $Requests.ToArray() }) -MgGraph:$MgGraph.IsPresent -WhatIf:$false -ErrorAction Stop
+                $BatchResponse = Invoke-Graphimo -Uri '/$batch' -Method POST -Headers $Headers -Body ([ordered] @{ requests = $Requests.ToArray() }) -MgGraph:$MgGraph.IsPresent -WhatIf:$false -Confirm:$false -ThrowOnError -ErrorAction Stop
             } catch {
                 foreach ($State in $Pending) {
                     [pscustomobject] @{
@@ -274,7 +293,29 @@ function Import-GraphGuestBatch {
                     continue
                 }
 
-                $IsTransient = $StatusCode -in 408, 429, 500, 502, 503, 504
+                if ($StatusCode -in 408, 500, 502, 504) {
+                    [pscustomobject] @{
+                        InputIndex        = $State.InputIndex
+                        Context           = $State.Context
+                        EmailAddress      = $State.EmailAddress
+                        Status            = 'Uncertain'
+                        Success           = $false
+                        StatusCode        = $StatusCode
+                        AttemptCount      = $State.AttemptCount
+                        RetryCount        = $State.AttemptCount - 1
+                        RetryDelaySeconds = $State.RetryDelaySeconds
+                        ThrottleDelaySeconds = $State.ThrottleDelaySeconds
+                        BatchRetryDelaySeconds = $State.BatchRetryDelaySeconds
+                        BatchThrottleDelaySeconds = $State.BatchThrottleDelaySeconds
+                        OperationType     = $State.OperationType
+                        InvitedUser       = $null
+                        ErrorCode         = 'AmbiguousInvitationResponse'
+                        ErrorMessage      = 'Microsoft Graph returned an ambiguous invitation response. Reconcile the invitation before retrying.'
+                    }
+                    continue
+                }
+
+                $IsTransient = $StatusCode -in 429, 503
                 if ($IsTransient -and $State.AttemptCount -le $MaxRetries) {
                     $ResponseRetryDelay = Get-GraphimoRetryAfterSeconds -Headers $Response.headers
                     if ($null -eq $ResponseRetryDelay) {
@@ -331,8 +372,9 @@ function Import-GraphGuestBatch {
         }
         })
         $OrderedBatchResults = @($BatchResults | Sort-Object InputIndex)
-        if ($ResultBatchAction -and @($OrderedBatchResults | Where-Object Status -ne 'WhatIf').Count -gt 0) {
-            & $ResultBatchAction ([object[]] $OrderedBatchResults)
+        $BatchWasSimulated = @($OrderedBatchResults | Where-Object Status -eq 'WhatIf').Count -gt 0
+        if ($ResultBatchAction -and -not $BatchWasSimulated -and $OrderedBatchResults.Count -gt 0) {
+            $null = & $ResultBatchAction ([object[]] $OrderedBatchResults)
         }
         $OrderedBatchResults
     }
