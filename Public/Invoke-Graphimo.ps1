@@ -12,29 +12,71 @@
         [string] $CountVariable,
         [int] $First,
         [string] $ConsistencyLevel,
-        [switch] $MgGraph
+        [switch] $MgGraph,
+        [switch] $ThrowOnError
     )
     if ($MgGraph -or $Script:MgGraphAuthenticated -eq $true) {
         # we use the Microsoft.Graph module instead of Invoke-RestMethod
     } elseif ($Headers.MsalToken) {
         if ($Headers.Splat) {
             $Splat = $Headers.Splat
-            $Headers = Connect-MsalToken -Authorization $Headers
+            try {
+                $Headers = Connect-MsalToken -Authorization $Headers
+            } catch {
+                if ($ThrowOnError) {
+                    $Exception = [System.UnauthorizedAccessException]::new('Invoke-Graphimo - Authorization refresh failed before dispatch.', $_.Exception)
+                    $Exception.Data['GraphimoFailurePhase'] = 'AuthorizationPreDispatch'
+                    throw $Exception
+                }
+                throw
+            }
         }
     } else {
         if (-not $Headers) {
-            Write-Warning "No headers provided. Skipping."
+            $Message = 'No headers provided. Skipping.'
+            if ($ThrowOnError) {
+                $Exception = [System.UnauthorizedAccessException]::new($Message)
+                $Exception.Data['GraphimoFailurePhase'] = 'AuthorizationPreDispatch'
+                throw $Exception
+            }
+            Write-Warning $Message
             return
         }
         # This forces a reconnect of session in case it's about to time out. If it's not timeouting a cache value is used
         if ($Headers.Splat) {
             $Splat = $Headers.Splat
-            $Headers = Connect-Graphimo @Splat
+            try {
+                $Headers = Connect-Graphimo @Splat
+            } catch {
+                if ($ThrowOnError) {
+                    $Exception = [System.UnauthorizedAccessException]::new('Invoke-Graphimo - Authorization refresh failed before dispatch.', $_.Exception)
+                    $Exception.Data['GraphimoFailurePhase'] = 'AuthorizationPreDispatch'
+                    throw $Exception
+                }
+                throw
+            }
         }
     }
 
-    if ($Headers.Error) {
-        Write-Warning "Invoke-Graphimo - Authorization error. Skipping."
+    $UsesMgGraph = $MgGraph -or $Script:MgGraphAuthenticated -eq $true
+    if ($UsesMgGraph -and -not (Get-Command -Name 'Invoke-MgGraphRequest' -ErrorAction SilentlyContinue)) {
+        $Message = 'Invoke-Graphimo - Microsoft Graph PowerShell SDK command Invoke-MgGraphRequest is unavailable. Skipping.'
+        if ($ThrowOnError) {
+            $Exception = [System.Management.Automation.CommandNotFoundException]::new($Message)
+            $Exception.Data['GraphimoFailurePhase'] = 'GraphSdkUnavailable'
+            throw $Exception
+        }
+        Write-Warning $Message
+        return
+    }
+    if (-not $UsesMgGraph -and (-not $Headers -or $Headers.Error)) {
+        $Message = 'Invoke-Graphimo - Authorization error. Skipping.'
+        if ($ThrowOnError) {
+            $Exception = [System.UnauthorizedAccessException]::new($Message)
+            $Exception.Data['GraphimoFailurePhase'] = 'AuthorizationPreDispatch'
+            throw $Exception
+        }
+        Write-Warning $Message
         return
     }
     if ($Headers.MsalToken) {
@@ -119,6 +161,9 @@
             }
         }
     } catch {
+        if ($ThrowOnError) {
+            throw
+        }
         Write-Warning -Message (Format-GraphimoRestError -ErrorRecord $_ -RestSplat $RestSplat)
         if ($Method -notin 'GET', 'POST') {
             return $false

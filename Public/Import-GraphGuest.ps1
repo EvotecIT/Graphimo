@@ -18,20 +18,6 @@
     }
 
     $URI = '/invitations'
-    $body = [ordered]@{
-        'invitedUserDisplayName'  = $Name
-        'invitedUserEmailAddress' = $EmailAddress
-        'inviteRedirectUrl'       = $InviteRedirectUrl
-        'sendInvitationMessage'   = $SendInvitationMessage.IsPresent
-        'resetRedemption'         = $ResetRedemption.IsPresent
-    }
-    if ($UserType) {
-        $Body['invitedUserType'] = $UserType
-    }
-    if ($InvitedUserID) {
-        $Body['invitedUser'] = @{
-            'id' = $InvitedUserID
-        }
-    }
+    $Body = New-GraphGuestInvitationBody -Name $Name -EmailAddress $EmailAddress -SendInvitationMessage $SendInvitationMessage.IsPresent -InviteRedirectUrl $InviteRedirectUrl -ResetRedemption $ResetRedemption.IsPresent -InvitedUserID $InvitedUserID -UserType $UserType
     Invoke-Graphimo -Uri $URI -Method POST -Headers $Headers -Body $Body -MgGraph:$MgGraph.IsPresent
 }
