@@ -1,3 +1,7 @@
+### 0.2.5 - 2026.10.30
+- Add restart-safe batched guest invitations with per-request results, bounded retries and durable pending/result callbacks.
+- Use the native Manifest, Build and Publish gates with an approved-signer allowlist, unsigned validation and configurable artefact output.
+- Publish the same native build to PowerShell Gallery and GitHub; local builds do not read publication keys.
 ### 0.2.4 - 2026.09.08
 - Fix Set-GraphUser PATCH routes by encoding only the user identifier instead of the whole /users/{id} path
 - Improve Invoke-Graphimo REST error logging for non-JSON responses so parsing failures include request context and a response preview
