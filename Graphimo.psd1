@@ -1,4 +1,4 @@
-﻿@{
+@{
     AliasesToExport      = @('Get-GraphUsers')
     Author               = 'Przemyslaw Klys'
     CmdletsToExport      = @()
@@ -21,7 +21,7 @@
     RequiredModules      = @(@{
             Guid            = 'ee272aa8-baaa-4edf-9f45-b6d6f7d844fe'
             ModuleName      = 'PSSharedGoods'
-            RequiredVersion = '0.0.313'
+            ModuleVersion   = '0.0.313'
         })
     RootModule           = 'Graphimo.psm1'
 }
