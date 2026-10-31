@@ -1,4 +1,41 @@
 ﻿function Connect-Graphimo {
+    <#
+    .SYNOPSIS
+    Acquires or reuses authorization for a specific Microsoft Graph identity.
+    .DESCRIPTION
+    Caches direct client-credential tokens by tenant, application and resource, and
+    reuses them only while the configured secret still matches. MSAL handles its own
+    token cache. Existing Microsoft Graph SDK connections remain SDK-managed.
+    .PARAMETER ApplicationID
+    Application client ID for direct client-credential authentication.
+    .PARAMETER ApplicationKey
+    Client secret. Prefer a protected credential source when storing configuration.
+    .PARAMETER ApplicationKeyEncrypted
+    Client secret protected with ConvertFrom-SecureString for the current environment.
+    .PARAMETER Credential
+    Client ID as the username and client secret as the password.
+    .PARAMETER TenantDomain
+    Tenant ID or verified tenant domain used for token acquisition.
+    .PARAMETER Resource
+    Resource or scope for the requested token.
+    .PARAMETER ExpiresTimeout
+    Number of seconds before expiration at which a direct token must be renewed.
+    .PARAMETER ForceRefesh
+    Bypasses Graphimo's direct token cache. The spelling is retained for compatibility.
+    MSAL provider options, including ForceRefresh, can be supplied in MsalToken.
+    .PARAMETER MsalToken
+    Parameters passed to Get-MsalToken. MSAL controls identity selection, caching and expiry.
+    .PARAMETER MsGraphConfiguration
+    Parameters passed to Connect-MgGraph.
+    .PARAMETER MgGraph
+    Uses a Microsoft Graph SDK connection that has already been established.
+    .EXAMPLE
+    $authorization = Connect-Graphimo -Credential $applicationCredential -TenantDomain 'contoso.onmicrosoft.com'
+    Acquires application authorization from a protected credential supplied by the caller.
+    .OUTPUTS
+    System.Collections.IDictionary. Authorization and reconnect parameters for direct or MSAL authentication.
+    SDK connection modes configure the current connection without returning this envelope.
+    #>
     [cmdletBinding(DefaultParameterSetName = 'ClearText')]
     param(
         [parameter(Mandatory, ParameterSetName = 'Encrypted')]
@@ -95,10 +132,18 @@
         return Connect-MsalToken -Authorization $Authorization -ExpiresTimeout $ExpiresTimeout -ForceRefesh:$ForceRefesh
     }
 
-    if ($Script:AuthorizationCache[$ApplicationID] -and -not $ForceRefesh) {
-        if ($Script:AuthorizationCache[$ApplicationID].ExpiresOn -gt [datetime]::UtcNow) {
+    # JSON preserves tuple boundaries without putting a credential into the dictionary key.
+    $CacheKey = ConvertTo-Json -InputObject @(
+        $TenantDomain.Trim().ToLowerInvariant()
+        $RestSplat.Body.client_id.ToLowerInvariant()
+        $Resource
+    ) -Compress
+    $CachedAuthorization = $Script:AuthorizationCache[$CacheKey]
+    if ($CachedAuthorization -and -not $ForceRefesh) {
+        if ($CachedAuthorization.Authorization.ExpiresOn -gt [datetime]::UtcNow -and
+            $CachedAuthorization.Credential -ceq $RestSplat.Body.client_secret) {
             Write-Verbose "Connect-Graphimo - Using cache for $ApplicationID"
-            return $Script:AuthorizationCache[$ApplicationID]
+            return $CachedAuthorization.Authorization
         }
     }
 
@@ -126,7 +171,11 @@
                 Resource       = $Resource
             }
         }
-        $Script:AuthorizationCache[$ApplicationID] = $Key
+        # Keep the acquisition credential separate from the mutable reconnect envelope returned to callers.
+        $Script:AuthorizationCache[$CacheKey] = @{
+            Credential    = $RestSplat.Body.client_secret
+            Authorization = $Key
+        }
     } catch {
         $ErrorMessage = $_.Exception.Message -replace "`n", " " -replace "`r", " "
         Write-Warning -Message "Connect-Graphimo - Error: $ErrorMessage"
